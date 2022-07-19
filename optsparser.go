@@ -5,20 +5,8 @@ import (
 	"os"
 	"strings"
 	"bytes"
+	"time"
 )
-
-const (
-	Bool	=	"bool"
-	String	=	"string"
-	Int		=	"int"
-	Float	=	"float"
-)
-
-type optDescr struct {
-	// TODO Add required flag
-	optType		string
-	short		string
-}
 
 type OptsParser struct {
 	name		string
@@ -27,10 +15,6 @@ type OptsParser struct {
 	orderedList	[]string
 	fs			*flag.FlagSet
 	exeName		string
-}
-type dummyWriter struct {}
-func (dw *dummyWriter) Write(p []byte) (int, error) {
-	return len(p), nil
 }
 
 func NewParser(name string) *OptsParser {
@@ -49,7 +33,7 @@ func NewParser(name string) *OptsParser {
 	return parser
 }
 
-func (p *OptsParser) AddOpt(optName, optType, usage string, val, dfltValue interface{}) {
+func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue interface{}) {
 	// Split option name to long and short
 	long, short, shOk := strings.Cut(optName, "|")
 	// Short should has only one character
@@ -70,29 +54,90 @@ func (p *OptsParser) AddOpt(optName, optType, usage string, val, dfltValue inter
 
 	// Using standard flag functions
 	switch optType {
-		case Bool:
-			p.fs.BoolVar(val.(*bool), long, dfltValue.(bool), usage)
-			if shOk {
-				p.fs.BoolVar(val.(*bool), short, dfltValue.(bool), usage)
-			}
-		case String:
-			p.fs.StringVar(val.(*string), long, dfltValue.(string), usage)
-			if shOk {
-				p.fs.StringVar(val.(*string), short, dfltValue.(string), usage)
-			}
-		case Int:
-			p.fs.IntVar(val.(*int), long, dfltValue.(int), usage)
-			if shOk {
-				p.fs.IntVar(val.(*int), short, dfltValue.(int), usage)
-			}
-		case Float:
-			p.fs.Float64Var(val.(*float64), long, dfltValue.(float64), usage)
-			if shOk {
-				p.fs.Float64Var(val.(*float64), short, dfltValue.(float64), usage)
-			}
-		default:
-			panic("Cannot add argument \"" + long + "\" with unsupported type \"" + optType + "\"")
+	case typeBool:
+		p.fs.BoolVar(val.(*bool), long, dfltValue.(bool), usage)
+		if shOk {
+			p.fs.BoolVar(val.(*bool), short, dfltValue.(bool), usage)
+		}
+	case typeString:
+		p.fs.StringVar(val.(*string), long, dfltValue.(string), usage)
+		if shOk {
+			p.fs.StringVar(val.(*string), short, dfltValue.(string), usage)
+		}
+	case typeUint:
+		p.fs.UintVar(val.(*uint), long, dfltValue.(uint), usage)
+		if shOk {
+			p.fs.UintVar(val.(*uint), short, dfltValue.(uint), usage)
+		}
+	case typeUint64:
+		p.fs.Uint64Var(val.(*uint64), long, dfltValue.(uint64), usage)
+		if shOk {
+			p.fs.Uint64Var(val.(*uint64), short, dfltValue.(uint64), usage)
+		}
+	case typeInt:
+		p.fs.IntVar(val.(*int), long, dfltValue.(int), usage)
+		if shOk {
+			p.fs.IntVar(val.(*int), short, dfltValue.(int), usage)
+		}
+	case typeInt64:
+		p.fs.Int64Var(val.(*int64), long, dfltValue.(int64), usage)
+		if shOk {
+			p.fs.Int64Var(val.(*int64), short, dfltValue.(int64), usage)
+		}
+	case typeFloat64:
+		p.fs.Float64Var(val.(*float64), long, dfltValue.(float64), usage)
+		if shOk {
+			p.fs.Float64Var(val.(*float64), short, dfltValue.(float64), usage)
+		}
+	case typeDuration:
+		p.fs.DurationVar(val.(*time.Duration), long, dfltValue.(time.Duration), usage)
+		if shOk {
+			p.fs.DurationVar(val.(*time.Duration), short, dfltValue.(time.Duration), usage)
+		}
+	case typeVal:
+		p.fs.Var(val.(flag.Value), long, usage)
+		if shOk {
+			p.fs.Var(val.(flag.Value), short, usage)
+		}
+	default:
+		panic("Cannot add argument \"" + long + "\" with unsupported type \"" + optType + "\"")
 	}
+}
+
+func (p *OptsParser) AddBool(optName, usage string, val *bool, dfltVal bool) {
+	p.addOpt(typeBool, optName, usage, val, dfltVal)
+}
+
+func (p *OptsParser) AddStr(optName, usage string, val *string, dfltVal string) {
+	p.addOpt(typeString, optName, usage, val, dfltVal)
+}
+
+func (p *OptsParser) AddInt(optName, usage string, val *int, dfltVal int) {
+	p.addOpt(typeInt, optName, usage, val, dfltVal)
+}
+
+func (p *OptsParser) AddInt64(optName, usage string, val *int64, dfltVal int64) {
+	p.addOpt(typeInt64, optName, usage, val, dfltVal)
+}
+
+func (p *OptsParser) AddFloat64(optName, usage string, val *float64, dfltVal float64) {
+	p.addOpt(typeFloat64, optName, usage, val, dfltVal)
+}
+
+func (p *OptsParser) AddDuration(optName, usage string, val *time.Duration, dfltVal time.Duration) {
+	p.addOpt(typeDuration, optName, usage, val, dfltVal)
+}
+
+func (p *OptsParser) AddUint(optName, usage string, val *uint, dfltVal uint) {
+	p.addOpt(typeUint, optName, usage, val, dfltVal)
+}
+
+func (p *OptsParser) AddUint64(optName, usage string, val *uint64, dfltVal uint64) {
+	p.addOpt(typeUint64, optName, usage, val, dfltVal)
+}
+
+func (p *OptsParser) AddVar(optName, usage string, val flag.Value) {
+	p.addOpt(typeVal, optName, usage, val, nil)
 }
 
 func (p *OptsParser) Parse() {
@@ -113,7 +158,7 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 
 	// Value description function
 	valDescr := func(d *optDescr) string {
-		if descr.optType == Bool {
+		if descr.optType == typeBool {
 			// Boolean option
 			return "[=true|false]\n"
 		}
