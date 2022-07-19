@@ -1,4 +1,4 @@
-package main
+package optsparser
 import (
 	"flag"
 	"fmt"
@@ -6,28 +6,6 @@ import (
 	"strings"
 	"bytes"
 )
-
-func main() {
-	fmt.Printf("Provided arguments: %#v\n", os.Args)
-
-	// Create new parser
-	p := NewParser("test parser")
-
-	// Add options
-	var yesno bool
-	p.AddOpt("yesno|y", Bool, "some boolean value", &yesno, true)
-
-	var strVal string
-	p.AddOpt("strval|s", String, "some string value", &strVal, "default string")
-
-	var intVal int
-	p.AddOpt("intval", Int, "some integer value", &intVal, 10)
-
-	var floatVal float64
-	p.AddOpt("floatval", Float, "some float value", &floatVal, 0.0)
-
-	p.Parse()
-}
 
 const (
 	Bool	=	"bool"
