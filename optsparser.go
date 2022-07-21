@@ -9,26 +9,23 @@ import (
 )
 
 type OptsParser struct {
-	name		string
+	flag.FlagSet
 	shToLong	map[string]string
 	longOpts	map[string]*optDescr
 	orderedList	[]string
-	fs			*flag.FlagSet
 	exeName		string
 }
 
 func NewParser(name string) *OptsParser {
-	parser := &OptsParser {
-		name:			name,
+	parser := &OptsParser{
+		FlagSet:		*flag.NewFlagSet(name, flag.ContinueOnError),
 		shToLong:		map[string]string{},
 		longOpts:		map[string]*optDescr{},
 		orderedList:	[]string{},
 	}
 
-	// Create and configure FlagSet object
-	parser.fs = flag.NewFlagSet(name, flag.ContinueOnError)
-	// Ignore all outputs processed by standard error functions
-	parser.fs.SetOutput(&dummyWriter{})
+	// Ignore all outputs produced by standard error functions
+	parser.SetOutput(&dummyWriter{})
 
 	return parser
 }
@@ -55,49 +52,49 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 	// Using standard flag functions
 	switch optType {
 	case typeBool:
-		p.fs.BoolVar(val.(*bool), long, dfltValue.(bool), usage)
+		p.BoolVar(val.(*bool), long, dfltValue.(bool), usage)
 		if shOk {
-			p.fs.BoolVar(val.(*bool), short, dfltValue.(bool), usage)
+			p.BoolVar(val.(*bool), short, dfltValue.(bool), usage)
 		}
 	case typeString:
-		p.fs.StringVar(val.(*string), long, dfltValue.(string), usage)
+		p.StringVar(val.(*string), long, dfltValue.(string), usage)
 		if shOk {
-			p.fs.StringVar(val.(*string), short, dfltValue.(string), usage)
+			p.StringVar(val.(*string), short, dfltValue.(string), usage)
 		}
 	case typeUint:
-		p.fs.UintVar(val.(*uint), long, dfltValue.(uint), usage)
+		p.UintVar(val.(*uint), long, dfltValue.(uint), usage)
 		if shOk {
-			p.fs.UintVar(val.(*uint), short, dfltValue.(uint), usage)
+			p.UintVar(val.(*uint), short, dfltValue.(uint), usage)
 		}
 	case typeUint64:
-		p.fs.Uint64Var(val.(*uint64), long, dfltValue.(uint64), usage)
+		p.Uint64Var(val.(*uint64), long, dfltValue.(uint64), usage)
 		if shOk {
-			p.fs.Uint64Var(val.(*uint64), short, dfltValue.(uint64), usage)
+			p.Uint64Var(val.(*uint64), short, dfltValue.(uint64), usage)
 		}
 	case typeInt:
-		p.fs.IntVar(val.(*int), long, dfltValue.(int), usage)
+		p.IntVar(val.(*int), long, dfltValue.(int), usage)
 		if shOk {
-			p.fs.IntVar(val.(*int), short, dfltValue.(int), usage)
+			p.IntVar(val.(*int), short, dfltValue.(int), usage)
 		}
 	case typeInt64:
-		p.fs.Int64Var(val.(*int64), long, dfltValue.(int64), usage)
+		p.Int64Var(val.(*int64), long, dfltValue.(int64), usage)
 		if shOk {
-			p.fs.Int64Var(val.(*int64), short, dfltValue.(int64), usage)
+			p.Int64Var(val.(*int64), short, dfltValue.(int64), usage)
 		}
 	case typeFloat64:
-		p.fs.Float64Var(val.(*float64), long, dfltValue.(float64), usage)
+		p.Float64Var(val.(*float64), long, dfltValue.(float64), usage)
 		if shOk {
-			p.fs.Float64Var(val.(*float64), short, dfltValue.(float64), usage)
+			p.Float64Var(val.(*float64), short, dfltValue.(float64), usage)
 		}
 	case typeDuration:
-		p.fs.DurationVar(val.(*time.Duration), long, dfltValue.(time.Duration), usage)
+		p.DurationVar(val.(*time.Duration), long, dfltValue.(time.Duration), usage)
 		if shOk {
-			p.fs.DurationVar(val.(*time.Duration), short, dfltValue.(time.Duration), usage)
+			p.DurationVar(val.(*time.Duration), short, dfltValue.(time.Duration), usage)
 		}
 	case typeVal:
-		p.fs.Var(val.(flag.Value), long, usage)
+		p.Var(val.(flag.Value), long, usage)
 		if shOk {
-			p.fs.Var(val.(flag.Value), short, usage)
+			p.Var(val.(flag.Value), short, usage)
 		}
 	default:
 		panic("Cannot add argument \"" + long + "\" with unsupported type \"" + optType + "\"")
@@ -145,7 +142,7 @@ func (p *OptsParser) Parse() {
 	p.exeName = os.Args[0]
 
 	// Do parsing
-	if err := p.fs.Parse(os.Args[1:]); err != nil {
+	if err := p.FlagSet.Parse(os.Args[1:]); err != nil {
 		p.Usage()
 	}
 }
@@ -190,14 +187,9 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 }
 
 func (p *OptsParser) Usage() {
-	if(p.name != "") {
-		fmt.Println("Usage of", p.name + ":" )
-	} else {
-		fmt.Println("Usage:")
-	}
 
 	for _, opt := range p.orderedList {
-		f := p.fs.Lookup(opt)
+		f := p.Lookup(opt)
 		// Print option help info
 		fmt.Print(p.descrLongOpt(f))
 	}
