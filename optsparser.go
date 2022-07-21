@@ -9,10 +9,11 @@ import (
 
 type OptsParser struct {
 	flag.FlagSet
-	shToLong	map[string]string
-	longOpts	map[string]*optDescr
-	orderedList	[]string
-	required	map[string]bool
+	shToLong		map[string]string
+	longOpts		map[string]*optDescr
+	orderedList		[]string
+	required		map[string]bool
+	generalDescr	string
 }
 
 func NewParser(name string, required ...string) *OptsParser {
@@ -30,6 +31,10 @@ func NewParser(name string, required ...string) *OptsParser {
 	}
 
 	return parser
+}
+
+func (p *OptsParser) SetGeneralDescr(descr string) {
+	p.generalDescr = descr
 }
 
 func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue interface{}) {
@@ -219,8 +224,9 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	out.WriteString("      " + f.Usage)
 
 	// Print default value if option is not required
+	fmt.Println(p.required)
 	if _, ok := p.required[f.Name]; !ok {
-		out.WriteString(fmt.Sprintf(" (default: %v)", f.Value))
+		out.WriteString(fmt.Sprintf(" (default: %v)", f.DefValue))
 	} else {
 		out.WriteString(" (required option)")
 	}
@@ -231,7 +237,17 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	return out.String()
 }
 
-func (p *OptsParser) Usage() {
+func (p *OptsParser) Usage(errDescr ...string) {
+	// Check for custom error description
+	if len(errDescr) != 0 {
+		fmt.Fprintf(os.Stderr, "\nUsage error: %s\n", errDescr[0])
+	}
+
+	// Print common description if set
+	if p.generalDescr != "" {
+		fmt.Fprintf(os.Stderr, "%s\n", p.generalDescr)
+	}
+
 	for _, opt := range p.orderedList {
 		f := p.Lookup(opt)
 		// Print option help info
