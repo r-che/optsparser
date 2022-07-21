@@ -9,7 +9,6 @@ import (
 
 type OptsParser struct {
 	flag.FlagSet
-	name		string
 	shToLong	map[string]string
 	longOpts	map[string]*optDescr
 	orderedList	[]string
@@ -19,7 +18,6 @@ type OptsParser struct {
 func NewParser(name string, required ...string) *OptsParser {
 	parser := &OptsParser{
 		FlagSet:		*flag.NewFlagSet(name, flag.ContinueOnError),
-		name:			name,
 		shToLong:		map[string]string{},
 		longOpts:		map[string]*optDescr{},
 		orderedList:	[]string{},
@@ -188,7 +186,7 @@ func (p *OptsParser) Parse() {
 			for opt := range p.required {
 				fmt.Fprintf(os.Stderr, "  --%s\n", opt)
 			}
-			fmt.Fprintf(os.Stderr, "Usage of %s:\n", p.name)
+			fmt.Fprintf(os.Stderr, "Usage of %s:\n", p.Name())
 			p.Usage()
 		}
 	}
