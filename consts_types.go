@@ -17,8 +17,3 @@ type optDescr struct {
 	optType		string
 	short		string
 }
-
-type dummyWriter struct {}
-func (dw *dummyWriter) Write(p []byte) (int, error) {
-	return len(p), nil
-}

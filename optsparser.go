@@ -24,9 +24,6 @@ func NewParser(name string) *OptsParser {
 		orderedList:	[]string{},
 	}
 
-	// Ignore all outputs produced by standard error functions
-	parser.SetOutput(&dummyWriter{})
-
 	return parser
 }
 
