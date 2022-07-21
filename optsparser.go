@@ -30,10 +30,21 @@ func NewParser(name string) *OptsParser {
 func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue interface{}) {
 	// Split option name to long and short
 	long, short, shOk := strings.Cut(optName, "|")
+	switch {
+	// Short and long options should not be the same
+	case long == short:
+		panic("Option of type " + optType + " with usage \"" + usage + "\" has inappropriate option name")
+	// Check for long option
+	case long == "" && shOk:
+		// Replace long by short
+		long = short
+		// Clear Ok flag to skip short option processing
+		shOk = false
 	// Short should has only one character
-	if shOk && len(short) != 1 {
+	case shOk && len(short) != 1:
 		panic("Invalid option description \"" + optName + "\" - length of short option must be == 1")
 	}
+
 	// Option description
 	descr := optDescr{optType: optType}
 	p.longOpts[long] = &descr
