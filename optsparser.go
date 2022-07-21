@@ -27,7 +27,7 @@ func NewParser(name string, required ...string) *OptsParser {
 
 	// Set required options
 	for _, opt := range required {
-		parser.required[opt] = false
+		parser.required[opt] = true
 	}
 
 	return parser
@@ -69,7 +69,7 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 
 	// If this options is required - need to mark it as added to parser
 	if _, ok := p.required[long]; ok {
-		p.required[long] = true
+		p.required[long] = false
 	}
 
 	// Using standard flag functions
@@ -162,8 +162,8 @@ func (p *OptsParser) AddVar(optName, usage string, val flag.Value) {
 
 func (p *OptsParser) Parse() {
 	// Check for all required options was set by Add...() functions
-	for opt, val := range p.required {
-		if !val {
+	for opt, required := range p.required {
+		if required {
 			panic("Option \"" + opt + "\" is required but not added to parser using Add...() method")
 		}
 	}
@@ -175,19 +175,27 @@ func (p *OptsParser) Parse() {
 
 	// Check for required options were set
 	if len(p.required) != 0 {
+		// Counter of required option that were set
+		nSet := 0
 		p.Visit(func(f *flag.Flag) {
 			// Remove all options that were set from required list
 
 			// Treat option name as long name
-			delete(p.required, f.Name)
-
+			if _, ok := p.required[f.Name]; ok {
+				p.required[f.Name] = true
+				nSet++
+			} else
 			// Threat option name as short name
-			delete(p.required, p.shToLong[f.Name])
+			if _, ok := p.required[p.shToLong[f.Name]]; ok {
+				p.required[p.shToLong[f.Name]] = true
+				nSet++
+			}
+
 		})
 
 		// Check for some of required options were not set
-		if len(p.required) != 0 {
-			fmt.Fprintf(os.Stderr, "Some required options are not set:\n")
+		if nSet != len(p.required) {
+			fmt.Fprintf(os.Stderr, "Error, some required options are not set:\n")
 			for opt := range p.required {
 				fmt.Fprintf(os.Stderr, "  --%s\n", opt)
 			}
@@ -224,11 +232,10 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	out.WriteString("      " + f.Usage)
 
 	// Print default value if option is not required
-	fmt.Println(p.required)
-	if _, ok := p.required[f.Name]; !ok {
-		out.WriteString(fmt.Sprintf(" (default: %v)", f.DefValue))
-	} else {
+	if _, ok := p.required[f.Name]; ok {
 		out.WriteString(" (required option)")
+	} else {
+		out.WriteString(fmt.Sprintf(" (default: %v)", f.DefValue))
 	}
 
 	out.WriteString("\n")
