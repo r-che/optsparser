@@ -123,7 +123,7 @@ func (p *OptsParser) AddBool(optName, usage string, val *bool, dfltVal bool) {
 	p.addOpt(typeBool, optName, usage, val, dfltVal)
 }
 
-func (p *OptsParser) AddStr(optName, usage string, val *string, dfltVal string) {
+func (p *OptsParser) AddString(optName, usage string, val *string, dfltVal string) {
 	p.addOpt(typeString, optName, usage, val, dfltVal)
 }
 
