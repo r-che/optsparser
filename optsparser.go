@@ -4,24 +4,31 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"bytes"
 	"time"
 )
 
 type OptsParser struct {
 	flag.FlagSet
+	name		string
 	shToLong	map[string]string
 	longOpts	map[string]*optDescr
 	orderedList	[]string
-	exeName		string
+	required	map[string]bool
 }
 
-func NewParser(name string) *OptsParser {
+func NewParser(name string, required ...string) *OptsParser {
 	parser := &OptsParser{
 		FlagSet:		*flag.NewFlagSet(name, flag.ContinueOnError),
+		name:			name,
 		shToLong:		map[string]string{},
 		longOpts:		map[string]*optDescr{},
 		orderedList:	[]string{},
+		required:		map[string]bool{},
+	}
+
+	// Set required options
+	for _, opt := range required {
+		parser.required[opt] = false
 	}
 
 	return parser
@@ -55,6 +62,11 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 		// Set match between short and long options
 		p.shToLong[short] = long
 		p.longOpts[long].short = short
+	}
+
+	// If this options is required - need to mark it as added to parser
+	if _, ok := p.required[long]; ok {
+		p.required[long] = true
 	}
 
 	// Using standard flag functions
@@ -146,18 +158,45 @@ func (p *OptsParser) AddVar(optName, usage string, val flag.Value) {
 }
 
 func (p *OptsParser) Parse() {
-	// Extract programm name
-	p.exeName = os.Args[0]
+	// Check for all required options was set by Add...() functions
+	for opt, val := range p.required {
+		if !val {
+			panic("Option \"" + opt + "\" is required but not added to parser using Add...() method")
+		}
+	}
 
 	// Do parsing
 	if err := p.FlagSet.Parse(os.Args[1:]); err != nil {
 		p.Usage()
 	}
+
+	// Check for required options were set
+	if len(p.required) != 0 {
+		p.Visit(func(f *flag.Flag) {
+			// Remove all options that were set from required list
+
+			// Treat option name as long name
+			delete(p.required, f.Name)
+
+			// Threat option name as short name
+			delete(p.required, p.shToLong[f.Name])
+		})
+
+		// Check for some of required options were not set
+		if len(p.required) != 0 {
+			fmt.Fprintf(os.Stderr, "Some required options are not set:\n")
+			for opt := range p.required {
+				fmt.Fprintf(os.Stderr, "  --%s\n", opt)
+			}
+			fmt.Fprintf(os.Stderr, "Usage of %s:\n", p.name)
+			p.Usage()
+		}
+	}
 }
 
 func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	// Output buffer
-	out := bytes.Buffer{}
+	out := strings.Builder{}
 	// Get long option description
 	descr := p.longOpts[f.Name]
 
@@ -181,24 +220,24 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	// Print usage information
 	out.WriteString("      " + f.Usage)
 
-	// Print default
-	// TODO Process "required" argument to skip default output for required arguments
-	out.WriteString(fmt.Sprintf(" (default: %v)", f.Value))
+	// Print default value if option is not required
+	if _, ok := p.required[f.Name]; !ok {
+		out.WriteString(fmt.Sprintf(" (default: %v)", f.Value))
+	} else {
+		out.WriteString(" (required option)")
+	}
 
 	out.WriteString("\n")
 
-//&flag.Flag{Name:"yesno", Usage:"some boolean value", Value:(*flag.boolValue)(0xc00001a0d8), DefValue:"false"}
-
-	// Description
-
+	// Return description
 	return out.String()
 }
 
 func (p *OptsParser) Usage() {
-
 	for _, opt := range p.orderedList {
 		f := p.Lookup(opt)
 		// Print option help info
-		fmt.Print(p.descrLongOpt(f))
+		fmt.Fprint(os.Stderr, p.descrLongOpt(f))
 	}
+	os.Exit(1)
 }

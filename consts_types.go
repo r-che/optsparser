@@ -13,7 +13,6 @@ const (
 )
 
 type optDescr struct {
-	// TODO Add required flag
 	optType		string
 	short		string
 }
