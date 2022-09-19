@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"bytes"
 )
 
 type OptsParser struct {
@@ -207,7 +208,7 @@ func (p *OptsParser) Parse() {
 
 func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	// Output buffer
-	out := strings.Builder{}
+	out := bytes.NewBuffer([]byte{})
 	// Get long option description
 	descr := p.longOpts[f.Name]
 
@@ -215,18 +216,20 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	valDescr := func(d *optDescr) string {
 		if descr.optType == typeBool {
 			// Boolean option
-			return "[=true|false]\n"
+			return "[=true|false]"
 		}
 		// Option with non-boolean agrument
-		return fmt.Sprintf(" %s\n", descr.optType)
+		return fmt.Sprintf(" %s", descr.optType)
 	}
 
 	// Is short option exists?
 	if short := descr.short; short != "" {
-		out.WriteString(fmt.Sprintf("  -%s%s", short, valDescr(descr)))
+		// Print short, then long
+		fmt.Fprintf(out, "    -%s%s, --%s%s\n", short, valDescr(descr), f.Name, valDescr(descr))
+	} else {
+		// Print only long option name
+		fmt.Fprintf(out, "    --%s%s\n", f.Name, valDescr(descr))
 	}
-	// Long option name
-	out.WriteString(fmt.Sprintf("  --%s%s", f.Name, valDescr(descr)))
 
 	// Print usage information
 	out.WriteString("      " + f.Usage)
@@ -235,7 +238,7 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	if _, ok := p.required[f.Name]; ok {
 		out.WriteString(" (required option)")
 	} else {
-		out.WriteString(fmt.Sprintf(" (default: %v)", f.DefValue))
+		fmt.Fprintf(out, " (default: %v)", f.DefValue)
 	}
 
 	out.WriteString("\n")
