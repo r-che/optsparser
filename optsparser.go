@@ -138,11 +138,6 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 	}
 }
 
-func (p *OptsParser) nextSep() string {
-	defer func() { p.sepIndex++ }()
-	return fmt.Sprintf("%s%d", sepPrefix, p.sepIndex)
-}
-
 func (p *OptsParser) AddBool(optName, usage string, val *bool, dfltVal bool) {
 	p.addOpt(typeBool, optName, usage, val, dfltVal)
 }
@@ -305,4 +300,9 @@ func (p *OptsParser) Usage(errDescr ...string) {
 		fmt.Fprint(os.Stderr, p.descrLongOpt(f))
 	}
 	os.Exit(1)
+}
+
+func (p *OptsParser) nextSep() string {
+	defer func() { p.sepIndex++ }()
+	return fmt.Sprintf("%s%d", sepPrefix, p.sepIndex)
 }
