@@ -260,7 +260,13 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	if _, ok := p.required[f.Name]; ok {
 		out.WriteString(" (required option)")
 	} else {
-		fmt.Fprintf(out, " (default: %v)", f.DefValue)
+		defVal := f.DefValue
+		if defVal == "" {
+			// Replace by quotes
+			defVal = `""`
+		}
+
+		fmt.Fprintf(out, " (default: %v)", defVal)
 	}
 
 	out.WriteString("\n")
