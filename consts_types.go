@@ -1,5 +1,9 @@
 package optsparser
 
+const sepPrefix = "\u0000\u0000separator\u0000\u0000"
+const optIndent = "    "
+const helpIndent = optIndent + "  "
+
 const (
 	typeBool		=	"bool"
 	typeString		=	"string"
@@ -10,6 +14,7 @@ const (
 	typeFloat64		=	"float64"
 	typeDuration	=	"duration"
 	typeVal			=	"value"
+	typeSeparator	=	"sep"
 )
 
 type optDescr struct {

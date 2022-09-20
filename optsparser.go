@@ -15,6 +15,7 @@ type OptsParser struct {
 	orderedList		[]string
 	required		map[string]bool
 	generalDescr	string
+	sepIndex		int
 }
 
 func NewParser(name string, required ...string) *OptsParser {
@@ -42,9 +43,12 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 	// Split option name to long and short
 	long, short, shOk := strings.Cut(optName, "|")
 	switch {
+	case optType == typeSeparator:
+		// Skip separator
+
 	// Short and long options should not be the same
 	case long == short:
-		panic("Option of type " + optType + " with usage \"" + usage + "\" has inappropriate option name")
+		panic("Option of type \"" + optType + "\" with usage \"" + usage + "\" has inappropriate option name")
 	// Check for long option
 	case long == "" && shOk:
 		// Replace long by short
@@ -72,6 +76,9 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 	if _, ok := p.required[long]; ok {
 		p.required[long] = false
 	}
+
+	// Stub for separators
+	var sepStub string
 
 	// Using standard flag functions
 	switch optType {
@@ -120,9 +127,20 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 		if shOk {
 			p.Var(val.(flag.Value), short, usage)
 		}
+	case typeSeparator:
+		// Add new separator
+		sep := p.nextSep()
+		// Replace last item of ordered list by separator value
+		p.orderedList[len(p.orderedList)-1] = sep
+		p.StringVar(&sepStub, sep, "", usage)
 	default:
 		panic("Cannot add argument \"" + long + "\" with unsupported type \"" + optType + "\"")
 	}
+}
+
+func (p *OptsParser) nextSep() string {
+	defer func() { p.sepIndex++ }()
+	return fmt.Sprintf("%s%d", sepPrefix, p.sepIndex)
 }
 
 func (p *OptsParser) AddBool(optName, usage string, val *bool, dfltVal bool) {
@@ -159,6 +177,10 @@ func (p *OptsParser) AddUint64(optName, usage string, val *uint64, dfltVal uint6
 
 func (p *OptsParser) AddVar(optName, usage string, val flag.Value) {
 	p.addOpt(typeVal, optName, usage, val, nil)
+}
+
+func (p *OptsParser) AddSeparator(text string) {
+	p.addOpt(typeSeparator, "", text, nil, nil)
 }
 
 func (p *OptsParser) Parse() {
@@ -198,9 +220,9 @@ func (p *OptsParser) Parse() {
 		if nSet != len(p.required) {
 			fmt.Fprintf(os.Stderr, "Error, some required options are not set:\n")
 			for opt := range p.required {
-				fmt.Fprintf(os.Stderr, "  --%s\n", opt)
+				fmt.Fprintf(os.Stderr, optIndent + "--%s\n", opt)
 			}
-			fmt.Fprintf(os.Stderr, "Usage of %s:\n", p.Name())
+			fmt.Fprintf(os.Stderr, "\nUsage of %s:\n", p.Name())
 			p.Usage()
 		}
 	}
@@ -225,14 +247,14 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	// Is short option exists?
 	if short := descr.short; short != "" {
 		// Print short, then long
-		fmt.Fprintf(out, "    -%s%s, --%s%s\n", short, valDescr(descr), f.Name, valDescr(descr))
+		fmt.Fprintf(out, optIndent + "-%s%s, --%s%s\n", short, valDescr(descr), f.Name, valDescr(descr))
 	} else {
 		// Print only long option name
-		fmt.Fprintf(out, "    --%s%s\n", f.Name, valDescr(descr))
+		fmt.Fprintf(out, optIndent + "--%s%s\n", f.Name, valDescr(descr))
 	}
 
 	// Print usage information
-	out.WriteString("      " + f.Usage)
+	out.WriteString(helpIndent + f.Usage)
 
 	// Print default value if option is not required
 	if _, ok := p.required[f.Name]; ok {
@@ -258,8 +280,21 @@ func (p *OptsParser) Usage(errDescr ...string) {
 		fmt.Fprintf(os.Stderr, "%s\n", p.generalDescr)
 	}
 
+	// Reset separators index
+	p.sepIndex = 0
+	nextSep := p.nextSep()
+
 	for _, opt := range p.orderedList {
 		f := p.Lookup(opt)
+		// Check is option a separator
+		if opt == nextSep {
+			// Update the value of the next expected separator
+			nextSep = p.nextSep()
+			// Print separator, then continue to the next option
+			fmt.Fprintf(os.Stderr, optIndent + "%s\n", f.Usage)
+			continue
+		}
+
 		// Print option help info
 		fmt.Fprint(os.Stderr, p.descrLongOpt(f))
 	}
