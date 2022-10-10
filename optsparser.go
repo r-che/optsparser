@@ -8,6 +8,8 @@ import (
 	"bytes"
 )
 
+const lsJoinDefault = ", "
+
 type OptsParser struct {
 	flag.FlagSet
 	shToLong		map[string]string
@@ -16,6 +18,8 @@ type OptsParser struct {
 	required		map[string]bool
 	generalDescr	string
 	sepIndex		int
+	lsJoinStr		string	// long + short join string
+	shortFirst		bool
 }
 
 func NewParser(name string, required ...string) *OptsParser {
@@ -25,6 +29,7 @@ func NewParser(name string, required ...string) *OptsParser {
 		longOpts:		map[string]*optDescr{},
 		orderedList:	[]string{},
 		required:		map[string]bool{},
+		lsJoinStr:		lsJoinDefault,
 	}
 
 	// Set required options
@@ -241,8 +246,15 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 
 	// Is short option exists?
 	if short := descr.short; short != "" {
-		// Print short, then long
-		fmt.Fprintf(out, optIndent + "-%s%s, --%s%s\n", short, valDescr(descr), f.Name, valDescr(descr))
+		if p.shortFirst {
+			// Print short, join string, then long
+			fmt.Fprintf(out, optIndent + "-%s%s" + "%s" + "--%s%s\n",
+				short, valDescr(descr), p.lsJoinStr, f.Name, valDescr(descr))
+		} else {
+			// Print long, join string, then short
+			fmt.Fprintf(out, optIndent + "--%s%s" + "%s" + "-%s%s\n",
+				f.Name, valDescr(descr), p.lsJoinStr, short, valDescr(descr))
+		}
 	} else {
 		// Print only long option name
 		fmt.Fprintf(out, optIndent + "--%s%s\n", f.Name, valDescr(descr))
@@ -268,6 +280,14 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 
 	// Return description
 	return out.String()
+}
+
+func (p *OptsParser) SetLongShortJoinStr(join string) {
+	p.lsJoinStr = join
+}
+
+func (p *OptsParser) SetShortFirst(v bool) {
+	p.shortFirst = v
 }
 
 func (p *OptsParser) Usage(errDescr ...string) {
