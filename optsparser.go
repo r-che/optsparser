@@ -10,6 +10,9 @@ import (
 
 const lsJoinDefault = ", "
 
+// Auxiliary variable to avoid tests termination on Usage() function
+var usageDoExit = true
+
 type OptsParser struct {
 	flag.FlagSet
 	shToLong		map[string]string
@@ -325,7 +328,11 @@ func (p *OptsParser) Usage(errDescr ...string) {
 		// Print option help info
 		fmt.Fprint(p.Output(), p.descrLongOpt(f))
 	}
-	os.Exit(1)
+
+	// XXX This condition is not satisfied only in tests
+	if usageDoExit {
+		os.Exit(1)
+	}
 }
 
 func (p *OptsParser) nextSep() string {
