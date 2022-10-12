@@ -40,8 +40,10 @@ func NewParser(name string, required ...string) *OptsParser {
 	return parser
 }
 
-func (p *OptsParser) SetGeneralDescr(descr string) {
+func (p *OptsParser) SetGeneralDescr(descr string) *OptsParser {
 	p.generalDescr = descr
+
+	return p
 }
 
 func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue interface{}) {
@@ -218,11 +220,11 @@ func (p *OptsParser) Parse() {
 
 		// Check for some of required options were not set
 		if nSet != len(p.required) {
-			fmt.Fprintf(os.Stderr, "Error, some required options are not set:\n")
+			fmt.Fprintf(p.Output(), "Error, some required options are not set:\n")
 			for opt := range p.required {
-				fmt.Fprintf(os.Stderr, optIndent + "--%s\n", opt)
+				fmt.Fprintf(p.Output(), optIndent + "--%s\n", opt)
 			}
-			fmt.Fprintf(os.Stderr, "\nUsage of %s:\n", p.Name())
+			fmt.Fprintf(p.Output(), "\nUsage of %s:\n", p.Name())
 			p.Usage()
 		}
 	}
@@ -282,23 +284,27 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	return out.String()
 }
 
-func (p *OptsParser) SetLongShortJoinStr(join string) {
+func (p *OptsParser) SetLongShortJoinStr(join string) *OptsParser {
 	p.lsJoinStr = join
+
+	return p
 }
 
-func (p *OptsParser) SetShortFirst(v bool) {
+func (p *OptsParser) SetShortFirst(v bool) *OptsParser {
 	p.shortFirst = v
+
+	return p
 }
 
 func (p *OptsParser) Usage(errDescr ...string) {
 	// Check for custom error description
 	if len(errDescr) != 0 {
-		fmt.Fprintf(os.Stderr, "\nUsage error: %s\n", errDescr[0])
+		fmt.Fprintf(p.Output(), "\nUsage error: %s\n", errDescr[0])
 	}
 
 	// Print common description if set
 	if p.generalDescr != "" {
-		fmt.Fprintf(os.Stderr, "%s\n", p.generalDescr)
+		fmt.Fprintf(p.Output(), "%s\n", p.generalDescr)
 	}
 
 	// Reset separators index
@@ -312,12 +318,12 @@ func (p *OptsParser) Usage(errDescr ...string) {
 			// Update the value of the next expected separator
 			nextSep = p.nextSep()
 			// Print separator, then continue to the next option
-			fmt.Fprintf(os.Stderr, optIndent + "%s\n", f.Usage)
+			fmt.Fprintf(p.Output(), optIndent + "%s\n", f.Usage)
 			continue
 		}
 
 		// Print option help info
-		fmt.Fprint(os.Stderr, p.descrLongOpt(f))
+		fmt.Fprint(p.Output(), p.descrLongOpt(f))
 	}
 	os.Exit(1)
 }
