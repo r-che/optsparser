@@ -10,8 +10,12 @@ import (
 
 const lsJoinDefault = ", "
 
-// Auxiliary variable to avoid tests termination on Usage() function
-var usageDoExit = true
+var (
+	// Auxiliary variable to avoid tests termination on Usage() function
+	usageDoExit		=	true
+	// Auxiliary variable to show that Usage() was triggered
+	usageTriggered	=	false
+)
 
 type OptsParser struct {
 	flag.FlagSet
@@ -329,10 +333,12 @@ func (p *OptsParser) Usage(errDescr ...string) {
 		fmt.Fprint(p.Output(), p.descrLongOpt(f))
 	}
 
-	// XXX This condition is not satisfied only in tests
+	// XXX This condition will not satisfied only in tests
 	if usageDoExit {
 		os.Exit(1)
 	}
+	// XXX For tests purposes - set flag that usage called
+	usageTriggered = true
 }
 
 func (p *OptsParser) nextSep() string {

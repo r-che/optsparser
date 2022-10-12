@@ -1,9 +1,11 @@
 package optsparser
 
 import (
+	"bytes"
 	"testing"
 	"os"
 	"time"
+	"io"
 )
 
 const (
@@ -15,61 +17,94 @@ func init() {
 	usageDoExit = false
 }
 
+type testOpts struct {
+	vBool		bool
+	vString		string
+	vInt		int
+	vInt64		int64
+	vFloat64	float64
+	vDuration	time.Duration
+	vUint		uint
+	vUint64		uint64
+	vVar		any
+}
+
 func TestParser(t *testing.T) {
-	// Create new parser
-	p := NewParser(stubApp,	// application name
-		// Required arguments
-		"strval-required",
-		"duration-value",
-		"intval-required",
-	)
+	// Save current value of os.Args because it will be replaced by test values
+	origArgs := make([]string, 0, len(os.Args))
+	copy(origArgs, os.Args)
+	// Recover on exiting from function
+	defer func() {
+		os.Args = origArgs
+	}()
 
-	// General description of application
-	p.SetGeneralDescr("\n$ test-app --REQUIRED-KEYS... [--optional-keys ...]\n")
+	for testN, test := range tests {
+		// Reset usage triggered flag
+		usageTriggered = false
 
-	//
-	// Add options
-	//
+		// Make a buffer to catch parser's output
+		pOut := &bytes.Buffer{}
 
-	// Add separator - title of options group
-	p.AddSeparator(">> Boolean parameters")
-	var yesno bool
-	p.AddBool("yesno|y", "some boolean value", &yesno, true)
+		// Create new parser
+		p := NewParser(stubApp,	// application name
+			// TODO Required arguments
+		).SetOutput(pOut)
 
-	p.AddSeparator("")
-	p.AddSeparator(">> String-based parameters")
+		to := testOpts{}
 
-	var strVal string
-	p.AddString("strval-required|s", "some required string value", &strVal, "")
-	var strVal2 string
-	p.AddString("strval-def-empty|S", "string value with empty default", &strVal2, "")
-	var strVal3 string
-	p.AddString("strval", "some string value with defaults", &strVal3, "default string")
+		p.AddBool("bool-opt", "boolean value", &to.vBool, test.defaults.vBool)
+		p.AddString("string-opt", "string value", &to.vString, test.defaults.vString)
+		p.AddInt("int-opt", "int value", &to.vInt,  test.defaults.vInt)
+		p.AddInt64("int64-opt", "int64 value", &to.vInt64, test.defaults.vInt64)
+		p.AddFloat64("float64-opt", "float64 value", &to.vFloat64, test.defaults.vFloat64)
+		p.AddDuration("duration-opt", "duration value", &to.vDuration, test.defaults.vDuration)
+		p.AddUint("uint-opt", "uint value", &to.vUint, test.defaults.vUint)
+		p.AddUint64("uint64-opt", "uint64 value", &to.vUint64, test.defaults.vUint64)
+		// TODO p.AddVar("var-opt", "var value", &to.flag.Value)
 
-	var durationVal time.Duration
-	p.AddDuration("duration-value|D", "some duration data", &durationVal, 0)
+		// Update test arguments to insert command name
+		test.args = append([]string{os.Args[0]}, test.args...)
 
-	p.AddSeparator("")
-	p.AddSeparator(">> Integer-based parameters")
+		// Replace real command arguments
+		os.Args = test.args
 
-	var intVal int
-	p.AddInt("intval-required|i", "some integer value", &intVal, -10)
+		// Do parsing
+		p.Parse()
 
-	var int64Val int64
-	p.AddInt64("int64val", "some integer64 value", &int64Val, -100)
+		// Is test should be OK?
+		if test.needOK {
+			// Is it true?
+			if usageTriggered {
+				// False, Usage called
+				t.Errorf("[%d] parse failed: usage message - %#v, args - %#v", testN, pOut.String(), test.args)
+				continue
+			}
 
-	var uintVal uint
-	p.AddUint("uintval", "some unsigned integer value", &uintVal, 10)
+			// Need to compare parsed and expected results
+			if to != test.want {
+				t.Errorf("[%d] incorrect Parse result: want - %#v got - %#v, args - %#v", testN, test.want, to, test.args)
+				continue
+			}
 
-	var uint64Val uint64
-	p.AddUint64("uint64val", "some unsigned integer64 value", &uint64Val, 100)
+			// Success, run next test
+			continue
+		}
 
-	p.AddSeparator("")
-	p.AddSeparator(">> Float64-based parameters")
+		// Test should be failed
+		if !usageTriggered {
+			t.Errorf("[%d] incorrect Parse result - test should fail but it is successful; got - %#v, args - %#v",
+				testN, to, test.args)
+		}
 
-	var floatVal float64
-	p.AddFloat64("floatval", "some float value", &floatVal, 0.0)
+		// Success, test failed as expected
+	}
+}
 
-	os.Args = os.Args[:1]
-	p.Parse()
+//
+// Functions required for testing
+//
+func (p *OptsParser) SetOutput(output io.Writer) *OptsParser {
+	p.FlagSet.SetOutput(output)
+
+	return p
 }
