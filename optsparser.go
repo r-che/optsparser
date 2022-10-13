@@ -1,11 +1,12 @@
 package optsparser
 import (
 	"flag"
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
 	"time"
-	"bytes"
+	"sort"
 )
 
 const lsJoinDefault = ", "
@@ -20,6 +21,7 @@ type OptsParser struct {
 	sepIndex		int
 	lsJoinStr		string	// long + short join string
 	shortFirst		bool
+	usageOnFail		bool
 }
 
 func NewParser(name string, required ...string) *OptsParser {
@@ -30,7 +32,11 @@ func NewParser(name string, required ...string) *OptsParser {
 		orderedList:	[]string{},
 		required:		map[string]bool{},
 		lsJoinStr:		lsJoinDefault,
+		usageOnFail:	true,
 	}
+
+	// Set stub to FlagSet.Usage to supress default output
+	parser.FlagSet.Usage = func() {}
 
 	// Set required options
 	for _, opt := range required {
@@ -185,7 +191,7 @@ func (p *OptsParser) AddSeparator(text string) {
 	p.addOpt(typeSeparator, "", text, nil, nil)
 }
 
-func (p *OptsParser) Parse() {
+func (p *OptsParser) Parse() error {
 	// Check for all required options was set by Add...() functions
 	for opt, required := range p.required {
 		if required {
@@ -193,41 +199,91 @@ func (p *OptsParser) Parse() {
 		}
 	}
 
+	//
+	// Suppress parser's output to avoid duplicate error messages
+	//
+
+	// Get current output from parser
+	out := p.FlagSet.Output()
+	// Redirect output to stub buffer
+	p.FlagSet.SetOutput(&bytes.Buffer{})
+
 	// Do parsing
-	if err := p.FlagSet.Parse(os.Args[1:]); err != nil {
-		p.Usage()
+	err := p.FlagSet.Parse(os.Args[1:])
+
+	// Recover the output to allow Usage to print if an error occurs
+	// XXX Do not use defer for this call because output
+	// XXX has to be recovered BEFORE calling Usage()
+	p.FlagSet.SetOutput(out)
+
+	if err != nil {
+		// Need to call Usage on fail?
+		if p.usageOnFail {
+			// Call Usage with error description
+			p.Usage(err)
+		}
+
+		// Just return error
+		return err
 	}
 
 	// Check for required options were set
 	if len(p.required) != 0 {
-		// Counter of required option that were set
-		nSet := 0
+		// List of required options that were set
+		rqSet := make(map[string]bool, len(p.required))
+
 		p.Visit(func(f *flag.Flag) {
 			// Remove all options that were set from required list
 
 			// Treat option name as long name
 			if _, ok := p.required[f.Name]; ok {
 				p.required[f.Name] = true
-				nSet++
+				// Save this option to map of set options
+				rqSet[f.Name] = true
 			} else
 			// Threat option name as short name
 			if _, ok := p.required[p.shToLong[f.Name]]; ok {
 				p.required[p.shToLong[f.Name]] = true
-				nSet++
+				// Save this option to map of set options
+				rqSet[p.shToLong[f.Name]] = true
 			}
 
 		})
 
 		// Check for some of required options were not set
-		if nSet != len(p.required) {
-			fmt.Fprintf(p.Output(), "Error, some required options are not set:\n")
+		if len(rqSet) != len(p.required) {
+			// Make sorted list of required options
+			opts := make([]string, 0, len(p.required))
 			for opt := range p.required {
-				fmt.Fprintf(p.Output(), optIndent + "--%s\n", opt)
+				opts = append(opts, opt)
 			}
-			fmt.Fprintf(p.Output(), "\nUsage of %s:\n", p.Name())
-			p.Usage()
+			// Sort it
+			sort.Strings(opts)
+
+			// List of required options that were not set
+			notSet := make([]string, 0, len(p.required))
+			for _, opt := range opts {
+				if !rqSet[opt] {
+					notSet = append(notSet, opt)
+				}
+			}
+
+			// Create an error
+			err := fmt.Errorf("required option(s) is missing: --%s", strings.Join(notSet, `, --`))
+
+			// Need to call Usage on fail?
+			if p.usageOnFail {
+				// Call Usage with error description
+				p.Usage(err)
+			}
+
+			// Just return error
+			return err
 		}
 	}
+
+	// OK
+	return nil
 }
 
 func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
@@ -296,10 +352,22 @@ func (p *OptsParser) SetShortFirst(v bool) *OptsParser {
 	return p
 }
 
-func (p *OptsParser) Usage(errDescr ...string) {
+func (p *OptsParser) SetUsageOnFail(v bool) *OptsParser {
+	p.usageOnFail = v
+
+	return p
+}
+
+func (p *OptsParser) Usage(errDescr ...error) {
 	// Check for custom error description
 	if len(errDescr) != 0 {
-		fmt.Fprintf(p.Output(), "\nUsage error: %s\n", errDescr[0])
+		fmt.Fprintf(p.Output(), "\nUsage ERROR: %v\n", errDescr[0])
+	}
+
+	if name := p.FlagSet.Name(); name == "" {
+		fmt.Fprintf(p.Output(), "\nUsage:\n")
+	} else {
+		fmt.Fprintf(p.Output(), "\nUsage of %s:\n", name)
 	}
 
 	// Print common description if set
