@@ -239,8 +239,6 @@ func (p *OptsParser) Parse() error {
 		rqSet := make(map[string]bool, len(p.required))
 
 		p.Visit(func(f *flag.Flag) {
-			// Remove all options that were set from required list
-
 			// Treat option name as long name
 			if _, ok := p.required[f.Name]; ok {
 				p.required[f.Name] = true

@@ -195,6 +195,30 @@ var tests = map[string]struct{
 		needOK:	true,
 	},
 
+	// No required options, no special default values
+	`06[ok]required-long_provided-short`: {
+		required: []string{
+			`bool-opt`,
+			`int64-opt`,
+			`duration-opt`,
+			`var-ymd-opt`,
+		},
+		args: []string{
+			`-b`,
+			`-s`,	`I think, therefore I am`,
+			`-i`,	`-430`,								// Dead Sea level below sea level
+			`-I`,	`-59604644783353249`,				// Leyland prime number
+			`-f`,	`3.141592`,
+			`-d`,	`250560m`,							// 4176 hours => 174 days
+			`-u`,	`220414`,							// The End and the Beginning
+			`-U`,	`40208000000000`,					// distance between Sun and Proxima Centauri, km
+			`-V`,	`2022.10.14`,
+			`command line arg#1`, `command line arg#2`, `command line arg#3`,
+		},
+		want: ref,	// expected result equal reference value
+		needOK:	true,
+	},
+
 	//
 	// Test FAIL cases
 	//
@@ -219,18 +243,18 @@ var tests = map[string]struct{
 	},
 
 	// Incorrect values passed - all Parse have to fail
-	`11[fail]incorrect-option-bool`:		{ args: []string{`--bool-opt=invalid`}, want: testOpts{} },
+	`11.0[fail]incorrect-option-bool`:		{ args: []string{`--bool-opt=invalid`}, want: testOpts{} },
 	// XXX Skip testing the string type because it is impossible to pass something inappropriate for the string type
-	`12[fail]incorrect-option-int`:			{ args: []string{`--int-opt`, `f430`}, want: testOpts{} },
-	`13[fail]incorrect-option-int64`:		{ args: []string{`--int64-opt`, `59604644783353249.1`}, want: testOpts{} },
-	`14[fail]incorrect-option-float64`:		{ args: []string{`--float64-opt`, `3.G+e0`, }, want: testOpts{} },
-	`15[fail]incorrect-option-duration`:	{ args: []string{`--duration-opt`, `1Y`}, want: testOpts{} },
-	`16[fail]incorrect-option-uint`:		{ args: []string{`--uint-opt`, `-220414`}, want: testOpts{} },
-	`17[fail]incorrect-option-uint64`:		{ args: []string{`--uint64-opt`, `-40208000000000`}, want: testOpts{} },
-	`18[fail]incorrect-option-var`:			{ args: []string{`--var-ymd-opt`, `2022/10/14`, }, want: testOpts{} },
+	`11.1[fail]incorrect-option-int`:			{ args: []string{`--int-opt`, `f430`}, want: testOpts{} },
+	`11.2[fail]incorrect-option-int64`:		{ args: []string{`--int64-opt`, `59604644783353249.1`}, want: testOpts{} },
+	`11.3[fail]incorrect-option-float64`:		{ args: []string{`--float64-opt`, `3.G+e0`, }, want: testOpts{} },
+	`11.4[fail]incorrect-option-duration`:	{ args: []string{`--duration-opt`, `1Y`}, want: testOpts{} },
+	`11.5[fail]incorrect-option-uint`:		{ args: []string{`--uint-opt`, `-220414`}, want: testOpts{} },
+	`11.6[fail]incorrect-option-uint64`:		{ args: []string{`--uint64-opt`, `-40208000000000`}, want: testOpts{} },
+	`11.7[fail]incorrect-option-var`:			{ args: []string{`--var-ymd-opt`, `2022/10/14`, }, want: testOpts{} },
 
 	// Test required option missing
-	`19[fail]required-opts`: {
+	`12[fail]required_short-opts`: {
 		required: []string{
 			`bool-opt`,
 			`int64-opt`,
@@ -251,7 +275,82 @@ var tests = map[string]struct{
 		want: ref,	// expected result equal reference value
 		needOK:	false,
 	},
+
+	// Test short required options missing
+	`13[fail]required_short-opts`: {
+		keys: map[string]string {
+			`bool`:		`b`,
+			`int64`:	`I`,
+			`duration`:	`d`,
+			`var`:		`V`,
+		},
+		required: []string{
+			`b`,
+			`I`,
+			`d`,
+			`V`,
+		},
+		args: []string{
+			`-s`,	`I think, therefore I am`,
+			`-i`,	`-430`,								// Dead Sea level below sea level
+			`-I`,	`-59604644783353249`,				// Leyland prime number
+			`-f`,	`3.141592`,
+			`-u`,	`220414`,							// The End and the Beginning
+			`-U`,	`40208000000000`,					// distance between Sun and Proxima Centauri, km
+			`command line arg#1`, `command line arg#2`, `command line arg#3`,
+		},
+		want: ref,	// expected result equal reference value
+		needOK:	false,
+	},
 }
+
+// Expected Usage outputs
+const expUsageOutput = `
+Usage ERROR: test error for testing usage of ` +  stubApp + `
+
+Usage of ` + stubApp + `:
+
+$ ` + stubApp + ` --required-keys ... [--optional-keys ...]
+
+    >> Boolean parameters
+    -y[=true|false] | --yesno[=true|false]
+      some boolean value (default: true)
+    
+    >> String-based parameters
+    -s string | --strval-required string
+      some required string value (required option)
+    -S string | --strval-def-empty string
+      string value with empty default (default: "")
+    --strval string
+      some string value with defaults (default: default string)
+    -D duration | --duration-value duration
+      some duration data (required option)
+    
+    >> Integer-based parameters
+    -i int | --intval int
+      some integer value (required option)
+    --int64val int64
+      some integer64 value (default: -100)
+    --uintval uint
+      some unsigned integer value (default: 10)
+    --uint64val uint64
+      some unsigned integer64 value (default: 100)
+    
+    >> Float64-based parameters
+    --floatval float64
+      some float value (default: 0)
+`
+// Usage without application name
+const expUsageNoNameOutput = `
+Usage ERROR: test error for testing usage of ` + stubApp + `
+
+Usage:
+
+$ ` + stubApp + ` --required-keys ... [--optional-keys ...]
+
+    --yesno[=true|false], -y[=true|false]
+      some boolean value (required option)
+`
 
 //
 // Type to test AddVar() - parses date in format YYYY.MM.DD

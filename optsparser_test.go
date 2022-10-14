@@ -7,6 +7,7 @@ import (
 	"os"
 	"io"
 	"sort"
+	"time"
 )
 
 const (
@@ -245,6 +246,100 @@ func TestRequiredNotAdded(t *testing.T) {
 
 	// Run parsing without int-option
 	p.Parse()
+}
+
+func TestUsage(t *testing.T) {
+	// Buffer to save Usage output
+	tOut := &bytes.Buffer{}
+	// Create new parser
+	p := NewParser(stubApp,
+		"strval-required",
+		"duration-value",
+		"intval",
+	).
+		SetGeneralDescr("\n$ " + stubApp + " --required-keys ... [--optional-keys ...]\n").
+		SetShortFirst(true).
+		SetUsageOnFail(false).
+		SetLongShortJoinStr(` | `).
+		SetOutput(tOut)
+
+
+	// Add options
+
+	// Add separator - title of option group
+	p.AddSeparator(">> Boolean parameters")
+	var yesno bool
+	p.AddBool("yesno|y", "some boolean value", &yesno, true)
+
+	p.AddSeparator("")
+	p.AddSeparator(">> String-based parameters")
+
+	var strVal string
+	p.AddString("strval-required|s", "some required string value", &strVal, "")
+	var strVal2 string
+	p.AddString("strval-def-empty|S", "string value with empty default", &strVal2, "")
+	var strVal3 string
+	p.AddString("strval", "some string value with defaults", &strVal3, "default string")
+
+	var durationVal time.Duration
+	p.AddDuration("duration-value|D", "some duration data", &durationVal, 0)
+
+	p.AddSeparator("")
+	p.AddSeparator(">> Integer-based parameters")
+
+	var intVal int
+	p.AddInt("intval|i", "some integer value", &intVal, -10)
+
+	var int64Val int64
+	p.AddInt64("int64val", "some integer64 value", &int64Val, -100)
+
+	var uintVal uint
+	p.AddUint("uintval", "some unsigned integer value", &uintVal, 10)
+
+	var uint64Val uint64
+	p.AddUint64("uint64val", "some unsigned integer64 value", &uint64Val, 100)
+
+	p.AddSeparator("")
+	p.AddSeparator(">> Float64-based parameters")
+
+	var floatVal float64
+	p.AddFloat64("floatval", "some float value", &floatVal, 0.0)
+
+	// Call Usage to get output
+	p.Usage(fmt.Errorf("test error for testing usage of %s", stubApp))
+
+	// Compare produced output with expected
+	if tOut.String() != expUsageOutput {
+		t.Errorf("output produced by Usage is different from expexted, see below:\n" +
+			"\n-------- Want --------\n%s\n" +
+			"-------- Got --------\n%s\n",
+			expUsageOutput, tOut.String(),
+		)
+	}
+}
+
+func TestUsageNoName(t *testing.T) {
+	// Buffer to save Usage output
+	tOut := &bytes.Buffer{}
+	// Create new parser
+	p := NewParser("",
+		"yesno",
+	).
+		SetGeneralDescr("\n$ " + stubApp + " --required-keys ... [--optional-keys ...]\n").
+		SetOutput(tOut)
+
+	p.AddBool("yesno|y", "some boolean value", new(bool), true)
+
+	p.Usage(fmt.Errorf("test error for testing usage of %s", stubApp))
+
+	// Compare produced output with expected
+	if tOut.String() != expUsageNoNameOutput {
+		t.Errorf("output produced by Usage(no name) is different from expexted, see below:\n" +
+			"\n-------- Want --------\n%s\n" +
+			"-------- Got --------\n%s\n",
+			expUsageNoNameOutput, tOut.String(),
+		)
+	}
 }
 
 //
