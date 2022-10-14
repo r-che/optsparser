@@ -123,7 +123,7 @@ func TestParser(t *testing.T) {
 	}
 }
 
-func TestPanics(t *testing.T) {
+func TestAddIncorrect(t *testing.T) {
 	//
 	// Test cases
 	//
@@ -166,7 +166,7 @@ func TestPanics(t *testing.T) {
 			}
 
 			// No panic, this should not be!
-			err = fmt.Errorf(`set %#v did not cause the panic but must!`, argsSet)
+			err = fmt.Errorf(`set %#v did not cause a panic, but it must!`, argsSet)
 		}()
 
 		// Run AddBool function with all set of arguments
@@ -179,26 +179,61 @@ func TestPanics(t *testing.T) {
 
 	// Run tests from set
 	for i, test := range tests {
-		// Make a buffer to catch parser's output
-		tOut := &bytes.Buffer{}
-
 		// Create new parser
-		p := NewParser(stubApp).SetOutput(tOut)
+		p := NewParser(stubApp).SetOutput(&bytes.Buffer{})
 
 		if err := testPanic(p, test); err != nil {
 			t.Errorf(`[%d] panic case return error: %v`, i, err)
 		}
 	}
+}
 
+func TestAddUnsupported(t *testing.T) {
+	// Handle panic
+	defer func() {
+		switch p := recover(); p.(type) {
+		case nil:
+			// No panic, this should not be!
+			t.Errorf(`adding of unsupported option type did not cause a panic, but it must!`)
+		case OptsPanic:
+			// Ok, panic as expected
+		default:
+			t.Errorf("raised unexpected panic: %v", p)
+		}
+	}()
 
-	// Incorrect option type
-	// TODO p.addOpt(`TEST-UNSUPPORTED-TYPE`, `unsup-name`, `unsupported value usage`, nil, nil)
+	// Create new parser
+	p := NewParser(stubApp).SetOutput(&bytes.Buffer{})
 
+	// Add incorrect option type
+	p.addOpt(`TEST-UNSUPPORTED-TYPE`, `unsup-name`, `unsupported value usage`, nil, nil)
+}
 
-	// Check for all required options was set by Add...() functions
-	// TODO
+func TestRequiredNotAdded(t *testing.T) {
+	// Handle panic
+	defer func() {
+		switch p := recover(); p.(type) {
+		case nil:
+			// No panic, this should not be!
+			t.Errorf(`parsing without adding all required options did not cause a panic, but it must!`)
+		case OptsPanic:
+			// Ok, panic as expected
+		default:
+			t.Errorf("raised unexpected panic: %v", p)
+		}
+	}()
 
+	// Create new parser
+	p := NewParser(stubApp,
+		`bool-option`,
+		`int-option`,
+	).SetOutput(&bytes.Buffer{})
 
+	// Add incorrect option type
+	p.AddBool(`bool-option`, `required bool option`, new(bool), false)
+
+	// Run parsing without int-option
+	p.Parse()
 }
 
 //

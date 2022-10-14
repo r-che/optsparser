@@ -127,7 +127,6 @@ var tests = map[string]struct{
 	//
 	// Test FAIL cases
 	//
-	// TODO
 
 	// Incorect option passed
 	`10[fail]incorrect-option`: {
@@ -160,7 +159,7 @@ var tests = map[string]struct{
 	`18[fail]incorrect-option-var`:			{ args: []string{`--var-ymd-opt`, `2022/10/14`, }, want: testOpts{} },
 
 	// Test required option missing
-	`19[fail]required-opts`: {	// TODO fix number of test
+	`19[fail]required-opts`: {
 		required: []string{
 			`bool-opt`,
 			`int64-opt`,
