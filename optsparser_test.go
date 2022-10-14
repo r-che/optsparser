@@ -13,9 +13,6 @@ const (
 	stubApp	=	"test-optsparser-app"
 )
 
-// TODO Need to test options without short options
-// TODO Need to test options without long options
-
 // Disallow Usage() do os.Exit
 func init() {
 	usageDoExit = false
@@ -55,6 +52,7 @@ func TestParser(t *testing.T) {
 			test.required...,
 		).SetOutput(tOut)
 
+		// Function to automate adding separators
 		sepN := -1
 		sep := func() {
 			if v, ok := test.separators[sepN]; ok {
@@ -64,25 +62,36 @@ func TestParser(t *testing.T) {
 		}
 		to := testOpts{}
 
+		// Function to automate selection of option names
+		opt := func(ot, def string) string {
+			if test.keys == nil {
+				return def
+			}
+			if v, ok := test.keys[ot]; ok {
+				return v
+			}
+			return def
+		}
+
 		sep()	//	[-1] some kind of additional description
 		sep()	//	[0]
-		p.AddBool("bool-opt|b", "boolean value", &to.vBool, test.defaults.vBool)
+		p.AddBool(opt("bool", "bool-opt|b"), "boolean value", &to.vBool, test.defaults.vBool)
 		sep()	//	[1]
-		p.AddString("string-opt|s", "string value", &to.vString, test.defaults.vString)
+		p.AddString(opt("string", "string-opt|s"), "string value", &to.vString, test.defaults.vString)
 		sep()	//	[2]
-		p.AddInt("int-opt|i", "int value", &to.vInt,  test.defaults.vInt)
+		p.AddInt(opt("int", "int-opt|i"), "int value", &to.vInt,  test.defaults.vInt)
 		sep()	//	[3]
-		p.AddInt64("int64-opt|I", "int64 value", &to.vInt64, test.defaults.vInt64)
+		p.AddInt64(opt("int64", "int64-opt|I"), "int64 value", &to.vInt64, test.defaults.vInt64)
 		sep()	//	[4]
-		p.AddFloat64("float64-opt|f", "float64 value", &to.vFloat64, test.defaults.vFloat64)
+		p.AddFloat64(opt("float64", "float64-opt|f"), "float64 value", &to.vFloat64, test.defaults.vFloat64)
 		sep()	//	[5]
-		p.AddDuration("duration-opt|d", "duration value", &to.vDuration, test.defaults.vDuration)
+		p.AddDuration(opt("duration", "duration-opt|d"), "duration value", &to.vDuration, test.defaults.vDuration)
 		sep()	//	[6]
-		p.AddUint("uint-opt|u", "uint value", &to.vUint, test.defaults.vUint)
+		p.AddUint(opt("uint", "uint-opt|u"), "uint value", &to.vUint, test.defaults.vUint)
 		sep()	//	[7]
-		p.AddUint64("uint64-opt|U", "uint64 value", &to.vUint64, test.defaults.vUint64)
+		p.AddUint64(opt("uint64", "uint64-opt|U"), "uint64 value", &to.vUint64, test.defaults.vUint64)
 		sep()	//	[8]
-		p.AddVar("var-ymd-opt|V", "var value", &to.vVar)
+		p.AddVar(opt("var", "var-ymd-opt|V"), "var value", &to.vVar)
 		sep()	//	[9]
 
 
@@ -141,18 +150,20 @@ func TestAddIncorrect(t *testing.T) {
 		// Too long short option
 		{ { `opt2|not-so-short`, `boolean value #2 - invalid length of short option`, false } },
 		// Empty short option
-		{ { `opt3|`, `boolean value #2 - invalid length of short option`, false } },
+		{ { `opt3|`, `boolean value #3 - invalid length of short option`, false } },
+		// Empty long option with short
+		{ { `|o`, `boolean value #4 - invalid length of short option`, false } },
 
 		// Redefining of existing long-option
 		{
-			{ `opt4`, `boolean value #3.0 - redefine long opt`, false },
-			{ `opt4`, `boolean value #3.1 - redefine long opt`, true },
+			{ `opt5`, `boolean value #4.0 - redefine long opt`, false },
+			{ `opt5`, `boolean value #4.1 - redefine long opt`, true },
 		},
 
 		// Redefining of existing short-option
 		{
-			{ `opt5|O`, `boolean value #4.0 - redefine short opt`, false },
-			{ `opt6|O`, `boolean value #4.1 - redefine short opt`, true },
+			{ `opt6|O`, `boolean value #5.0 - redefine short opt`, false },
+			{ `opt7|O`, `boolean value #5.1 - redefine short opt`, true },
 		},
 	}
 

@@ -34,6 +34,7 @@ var ref = testOpts{
 
 // Set of tests
 var tests = map[string]struct{
+	keys		map[string]string
 	defaults	testOpts
 	required	[]string
 	args		[]string
@@ -46,7 +47,7 @@ var tests = map[string]struct{
 	//
 
 	// No required options, no special default values
-	`00[ok]no-required-no-defaults`: {
+	`00[ok]no-required,no-defaults`: {
 		args: []string{
 			`--bool-opt`,
 			`--string-opt`,		`I think, therefore I am`,
@@ -73,7 +74,7 @@ var tests = map[string]struct{
 	},
 
 	// No required options, with special default values
-	`01[ok]no-required-with-defaults`: {
+	`01[ok]no-required_with-defaults`: {
 		defaults: ref,	// pass reference value as defaults
 		args: []string{
 			`--var-ymd-opt`,	`2022.10.14`,	// XXX AddVar() does not support default value, need to provide through arguments
@@ -84,7 +85,7 @@ var tests = map[string]struct{
 	},
 
 	// Short options test - no required options, no special default values
-	`02[ok]sort-opts_no-required-no-defaults`: {
+	`02[ok]short-opts_no-required,no-defaults`: {
 		args: []string{
 			`-b`,
 			`-s`, `I think, therefore I am`,
@@ -101,7 +102,7 @@ var tests = map[string]struct{
 	},
 
 	// Test required options, no special default values
-	`03[ok]required-opts-no-defaults`: {
+	`03[ok]required-opts,no-defaults`: {
 		required: []string{
 			`bool-opt`,
 			`int64-opt`,
@@ -119,6 +120,76 @@ var tests = map[string]struct{
 			`--uint64-opt`,		`40208000000000`,					// distance between Sun and Proxima Centauri, km
 			`--var-ymd-opt`,	`2022.10.14`,
 			// Test work without command line arguments
+		},
+		want: ref,	// expected result equal reference value
+		needOK:	true,
+	},
+
+	// Test parsing with only short options
+	`04[ok]only-short_with-required,no-defaults`: {
+		keys: map[string]string {
+			`bool`:		`b`,
+			`string`:	`s`,
+			`int`:		`i`,
+			`int64`:	`I`,
+			`float64`:	`f`,
+			`duration`:	`d`,
+			`uint`:		`u`,
+			`uint64`:	`U`,
+			`var`:		`V`,
+		},
+		required: []string{
+			`b`,
+			`I`,
+			`d`,
+			`V`,
+		},
+		args: []string{
+			`-b`,
+			`-s`,	`I think, therefore I am`,
+			`-i`,	`-430`,								// Dead Sea level below sea level
+			`-I`,	`-59604644783353249`,				// Leyland prime number
+			`-f`,	`3.141592`,
+			`-d`,	`250560m`,							// 4176 hours => 174 days
+			`-u`,	`220414`,							// The End and the Beginning
+			`-U`,	`40208000000000`,					// distance between Sun and Proxima Centauri, km
+			`-V`,	`2022.10.14`,
+			`command line arg#1`, `command line arg#2`, `command line arg#3`,
+		},
+		want: ref,	// expected result equal reference value
+		needOK:	true,
+	},
+
+	// Test parsing with only long options
+	`05[ok]only-long_with-required,no-defaults`: {
+		keys: map[string]string {
+			`bool`:		`bool-opt`,
+			`string`:	`string-opt`,
+			`int`:		`int-opt`,
+			`int64`:	`int64-opt`,
+			`float64`:	`float64-opt`,
+			`duration`:	`duration-opt`,
+			`uint`:		`uint-opt`,
+			`uint64`:	`uint64-opt`,
+			`var`:		`var-ymd-opt`,
+		},
+		required: []string{
+			`bool-opt`,
+			`int64-opt`,
+			`duration-opt`,
+			`var-ymd-opt`,
+		},
+		args: []string{
+			`--bool-opt`,
+			`--string-opt`,		`I think, therefore I am`,
+			`--int-opt`,		`-430`,								// Dead Sea level below sea level
+			`--int64-opt`,		`-59604644783353249`,				// Leyland prime number
+			`--float64-opt`,	`3.141592`,
+			`--duration-opt`,	`250560m`,							// 4176 hours => 174 days
+			`--uint-opt`,		`220414`,							// The End and the Beginning
+			`--uint64-opt`,		`40208000000000`,					// distance between Sun and Proxima Centauri, km
+			`--var-ymd-opt`,	`2022.10.14`,
+			`command line arg#1`, `command line arg#2`, `command line arg#3`,
 		},
 		want: ref,	// expected result equal reference value
 		needOK:	true,

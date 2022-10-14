@@ -71,10 +71,9 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 		doPanic("Option of type %q with the usage message %q has inappropriate option name", optType, usage)
 	// Check for long option
 	case long == "" && shOk:
-		// Replace long by short
-		long = short
-		// Clear Ok flag to skip short option processing
-		shOk = false
+		// Strange situation, passed something like "|o" as optName
+		doPanic(`Invalid specification: %q - if you want to use a short option without long one (e.g. "-%s")` +
+			` just use %q as the option name parameter`, optName, short, short)
 	// Short should has only one character
 	case shOk && len(short) != 1:
 		doPanic("Invalid option description %q - length of short option must be == 1", optName)
@@ -271,12 +270,14 @@ func (p *OptsParser) Parse() error {
 			notSet := make([]string, 0, len(p.required))
 			for _, opt := range opts {
 				if !rqSet[opt] {
-					notSet = append(notSet, opt)
+					// Required option can be long or short, to print correct
+					// number of dashes before the option name use dashes() function
+					notSet = append(notSet, dashes(opt) + opt)
 				}
 			}
 
 			// Create an error
-			err := fmt.Errorf("required option(s) is missing: --%s", strings.Join(notSet, `, --`))
+			err := fmt.Errorf("required option(s) is missing: %s", strings.Join(notSet, `, `))
 
 			// Need to call Usage on fail?
 			if p.usageOnFail {
@@ -321,8 +322,10 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 				f.Name, valDescr(descr), p.lsJoinStr, short, valDescr(descr))
 		}
 	} else {
-		// Print only long option name
-		fmt.Fprintf(out, optIndent + "--%s%s\n", f.Name, valDescr(descr))
+		// Print only long option name, in fact - long options may be short if only short
+		// option was added by p.Add... function, for such case use dashes() function
+		// to print correct number of dashes before the option
+		fmt.Fprintf(out, optIndent + "%s%s%s\n", dashes(f.Name), f.Name, valDescr(descr))
 	}
 
 	// Print usage information
@@ -424,4 +427,15 @@ type OptsPanic string
 
 func doPanic(format string, args ...any) {
 	panic(OptsPanic(fmt.Sprintf(format, args...)))
+}
+
+func dashes(name string) string {
+	// Is it a short name of option?
+	if len(name) == 1 {
+		// Only one dash required
+		return "-"
+	}
+
+	// Long name - two dashes required
+	return "--"
 }
