@@ -1,6 +1,7 @@
 package optsparser
 
 import (
+	"fmt"
 	"bytes"
 	"testing"
 	"os"
@@ -12,6 +13,9 @@ const (
 	stubApp	=	"test-optsparser-app"
 )
 
+// TODO Need to test options without short options
+// TODO Need to test options without long options
+
 // Disallow Usage() do os.Exit
 func init() {
 	usageDoExit = false
@@ -21,6 +25,8 @@ func TestParser(t *testing.T) {
 	// Save current value of os.Args because it will be replaced by test values
 	origArgs := make([]string, 0, len(os.Args))
 	copy(origArgs, os.Args)
+	// Get the binary name
+	binName := os.Args[0]
 	// Recover on exiting from function
 	defer func() {
 		os.Args = origArgs
@@ -79,11 +85,9 @@ func TestParser(t *testing.T) {
 		p.AddVar("var-ymd-opt|V", "var value", &to.vVar)
 		sep()	//	[9]
 
-		// Update test arguments to insert command name
-		test.args = append([]string{os.Args[0]}, test.args...)
 
 		// Replace real command arguments
-		os.Args = test.args
+		os.Args = append([]string{binName}, test.args...)
 
 		// Do parsing
 		p.Parse()
@@ -117,6 +121,84 @@ func TestParser(t *testing.T) {
 
 		// Success, test failed as expected
 	}
+}
+
+func TestPanics(t *testing.T) {
+	//
+	// Test cases
+	//
+	var bVal bool
+
+	type panicArgs struct {
+		opt, usage string
+		def bool
+	}
+
+	tests := [][]panicArgs {
+		// Short and long options should not be the same
+		{ { `opt1|opt1`, `boolean value #1 - short and long options are the same`, false } },
+
+		// Too long short option
+		{ { `opt2|not-so-short`, `boolean value #2 - invalid length of short option`, false } },
+		// Empty short option
+		{ { `opt3|`, `boolean value #2 - invalid length of short option`, false } },
+
+		// Redefining of existing long-option
+		{
+			{ `opt4`, `boolean value #3.0 - redefine long opt`, false },
+			{ `opt4`, `boolean value #3.1 - redefine long opt`, true },
+		},
+
+		// Redefining of existing short-option
+		{
+			{ `opt5|O`, `boolean value #4.0 - redefine short opt`, false },
+			{ `opt6|O`, `boolean value #4.1 - redefine short opt`, true },
+		},
+	}
+
+	// Function to handle panic
+	testPanic := func(p *OptsParser, argsSet []panicArgs) (err error) {
+		// Handle panic
+		defer func() {
+			if p := recover(); p != nil {
+				// Ok, panic as expected
+				return
+			}
+
+			// No panic, this should not be!
+			err = fmt.Errorf(`set %#v did not cause the panic but must!`, argsSet)
+		}()
+
+		// Run AddBool function with all set of arguments
+		for _, args := range argsSet {
+			p.AddBool(args.opt, args.usage, &bVal, args.def)
+		}
+
+		return nil
+	}
+
+	// Run tests from set
+	for i, test := range tests {
+		// Make a buffer to catch parser's output
+		tOut := &bytes.Buffer{}
+
+		// Create new parser
+		p := NewParser(stubApp).SetOutput(tOut)
+
+		if err := testPanic(p, test); err != nil {
+			t.Errorf(`[%d] panic case return error: %v`, i, err)
+		}
+	}
+
+
+	// Incorrect option type
+	// TODO p.addOpt(`TEST-UNSUPPORTED-TYPE`, `unsup-name`, `unsupported value usage`, nil, nil)
+
+
+	// Check for all required options was set by Add...() functions
+	// TODO
+
+
 }
 
 //

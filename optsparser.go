@@ -68,7 +68,7 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 
 	// Short and long options should not be the same
 	case long == short:
-		panic("Option of type \"" + optType + "\" with usage \"" + usage + "\" has inappropriate option name")
+		doPanic("Option of type %q with the usage message %q has inappropriate option name", optType, usage)
 	// Check for long option
 	case long == "" && shOk:
 		// Replace long by short
@@ -77,7 +77,7 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 		shOk = false
 	// Short should has only one character
 	case shOk && len(short) != 1:
-		panic("Invalid option description \"" + optName + "\" - length of short option must be == 1")
+		doPanic("Invalid option description %q - length of short option must be == 1", optName)
 	}
 
 	// Option description
@@ -154,7 +154,7 @@ func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue inter
 		p.orderedList[len(p.orderedList)-1] = sep
 		p.StringVar(&sepStub, sep, "", usage)
 	default:
-		panic("Cannot add argument \"" + long + "\" with unsupported type \"" + optType + "\"")
+		doPanic("Cannot add argument %q with unsupported type %q", long, optType)
 	}
 }
 
@@ -202,7 +202,7 @@ func (p *OptsParser) Parse() error {
 	// Check for all required options was set by Add...() functions
 	for opt, required := range p.required {
 		if required {
-			panic("Option \"" + opt + "\" is required but not added to parser using Add...() method")
+			doPanic("Option %q is required but not added to parser using Add...() method", opt)
 		}
 	}
 
@@ -412,4 +412,16 @@ func (p *OptsParser) Usage(errDescr ...error) {
 func (p *OptsParser) nextSep() string {
 	defer func() { p.sepIndex++ }()
 	return fmt.Sprintf("%s%d", sepPrefix, p.sepIndex)
+}
+
+//
+// Auxiliary functions and types
+//
+
+// OptsPanic type passed to the panic function to be able to distinguish
+// panic produced by package from the panic produced by imported packages
+type OptsPanic string
+
+func doPanic(format string, args ...any) {
+	panic(OptsPanic(fmt.Sprintf(format, args...)))
 }
