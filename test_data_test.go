@@ -317,6 +317,7 @@ $ ` + stubApp + ` --required-keys ... [--optional-keys ...]
       some boolean value (default: true)
     
     >> String-based parameters
+    >> One required and two parameters with defaults are supported
     -s string | --strval-required string
       some required string value (required option)
     -S string | --strval-def-empty string

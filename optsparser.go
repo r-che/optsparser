@@ -193,8 +193,10 @@ func (p *OptsParser) AddVar(optName, usage string, val flag.Value) {
 	p.addOpt(typeVal, optName, usage, val, nil)
 }
 
-func (p *OptsParser) AddSeparator(text string) {
-	p.addOpt(typeSeparator, "", text, nil, nil)
+func (p *OptsParser) AddSeparator(separators ...string) {
+	for _, separator := range separators {
+		p.addOpt(typeSeparator, "", separator, nil, nil)
+	}
 }
 
 func (p *OptsParser) Parse() error {

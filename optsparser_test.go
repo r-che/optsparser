@@ -271,8 +271,11 @@ func TestUsage(t *testing.T) {
 	var yesno bool
 	p.AddBool("yesno|y", "some boolean value", &yesno, true)
 
-	p.AddSeparator("")
-	p.AddSeparator(">> String-based parameters")
+	p.AddSeparator(
+		"",	// Add empty line to break usage output
+		">> String-based parameters",
+		">> One required and two parameters with defaults are supported",
+	)
 
 	var strVal string
 	p.AddString("strval-required|s", "some required string value", &strVal, "")
@@ -284,8 +287,10 @@ func TestUsage(t *testing.T) {
 	var durationVal time.Duration
 	p.AddDuration("duration-value|D", "some duration data", &durationVal, 0)
 
-	p.AddSeparator("")
-	p.AddSeparator(">> Integer-based parameters")
+	p.AddSeparator(
+		"",
+		">> Integer-based parameters",
+	)
 
 	var intVal int
 	p.AddInt("intval|i", "some integer value", &intVal, -10)
@@ -299,8 +304,10 @@ func TestUsage(t *testing.T) {
 	var uint64Val uint64
 	p.AddUint64("uint64val", "some unsigned integer64 value", &uint64Val, 100)
 
-	p.AddSeparator("")
-	p.AddSeparator(">> Float64-based parameters")
+	p.AddSeparator(
+		"",
+		">> Float64-based parameters",
+	)
 
 	var floatVal float64
 	p.AddFloat64("floatval", "some float value", &floatVal, 0.0)
