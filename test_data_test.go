@@ -19,7 +19,7 @@ type testOpts struct {
 	vVar		testOptVarYMD
 }
 
-// Reference value
+// Reference value.
 var ref = testOpts{
 	vBool:		true,
 	vString:	`I think, therefore I am`,
@@ -32,7 +32,7 @@ var ref = testOpts{
 	vVar:		testOptVarYMD(20221014),
 }
 
-// Set of tests
+// Set of tests.
 var tests = map[string]struct{
 	keys		map[string]string
 	defaults	testOpts
@@ -304,7 +304,7 @@ var tests = map[string]struct{
 	},
 }
 
-// Expected Usage outputs
+// Expected Usage outputs.
 const expUsageOutput = `
 Usage ERROR: test error for testing usage of ` +  stubApp + `
 
@@ -341,7 +341,7 @@ $ ` + stubApp + ` --required-keys ... [--optional-keys ...]
     --floatval float64
       some float value (default: 0)
 `
-// Usage without application name
+// Usage without application name.
 const expUsageNoNameOutput = `
 Usage ERROR: test error for testing usage of ` + stubApp + `
 

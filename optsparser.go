@@ -12,9 +12,9 @@ import (
 const lsJoinDefault = ", "
 
 var (
-	// Auxiliary variable to avoid tests termination on Usage() function
+	// Auxiliary variable to avoid tests termination on Usage() function.
 	usageDoExit		=	true
-	// Auxiliary variable to show that Usage() was triggered
+	// Auxiliary variable to show that Usage() was triggered.
 	usageTriggered	=	false
 )
 
@@ -42,7 +42,7 @@ func NewParser(name string, required ...string) *OptsParser {
 		usageOnFail:	true,
 	}
 
-	// Set stub to FlagSet.Usage to supress default output
+	// Set stub to FlagSet.Usage to supress default output.
 	parser.FlagSet.Usage = func() {}
 
 	// Set required options
@@ -422,7 +422,7 @@ func (p *OptsParser) nextSep() string {
 //
 
 // OptsPanic type passed to the panic function to be able to distinguish
-// panic produced by package from the panic produced by imported packages
+// panic produced by package from the panic produced by imported packages.
 type OptsPanic string
 
 func doPanic(format string, args ...any) {
