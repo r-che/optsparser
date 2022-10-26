@@ -14,8 +14,8 @@ const (
 	stubApp	=	"test-optsparser-app"
 )
 
-// Disallow Usage() do os.Exit
-func init() {
+// Disallow Usage() do os.Exit.
+func init() {	//nolint:gochecknoinits
 	usageDoExit = false
 }
 
@@ -100,7 +100,7 @@ func TestParser(t *testing.T) {
 		os.Args = append([]string{binName}, test.args...)
 
 		// Do parsing
-		p.Parse()
+		p.Parse()	//nolint: errcheck
 
 		// Is test should be OK?
 		if test.needOK {
@@ -245,7 +245,7 @@ func TestRequiredNotAdded(t *testing.T) {
 	p.AddBool(`bool-option`, `required bool option`, new(bool), false)
 
 	// Run parsing without int-option
-	p.Parse()
+	p.Parse()	//nolint: errcheck
 }
 
 func TestUsage(t *testing.T) {
