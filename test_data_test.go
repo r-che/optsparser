@@ -358,8 +358,8 @@ $ ` + stubApp + ` --required-keys ... [--optional-keys ...]
 //
 
 type testOptVarYMD int
-func (v *testOptVarYMD) String() string {
-	return fmt.Sprintf("Year %d month %d day %d", *v / 10000, (*v % 10000) / 100, *v % 100)
+func (ov *testOptVarYMD) String() string {
+	return fmt.Sprintf("Year %d month %d day %d", *ov / 10000, (*ov % 10000) / 100, *ov % 100)
 }
 func (ov *testOptVarYMD) Set(val string) error {
 	ymd := make([]int, 0, 3)

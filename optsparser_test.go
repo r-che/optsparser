@@ -178,7 +178,7 @@ func TestAddIncorrect(t *testing.T) {
 			}
 
 			// No panic, this should not be!
-			err = fmt.Errorf(`set %#v did not cause a panic, but it must!`, argsSet)
+			err = fmt.Errorf(`set %#v did not cause a panic, but it must`, argsSet)
 		}()
 
 		// Run AddBool function with all set of arguments
