@@ -42,7 +42,7 @@ func NewParser(name string, required ...string) *OptsParser {
 		usageOnFail:	true,
 	}
 
-	// Set stub to FlagSet.Usage to supress default output.
+	// Set stub to FlagSet.Usage to suppress default output.
 	parser.FlagSet.Usage = func() {}
 
 	// Set required options
@@ -306,7 +306,7 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 			// Boolean option
 			return "[=true|false]"
 		}
-		// Option with non-boolean agrument
+		// Option with non-boolean argument
 		return fmt.Sprintf(" %s", descr.optType)
 	}
 

@@ -223,7 +223,7 @@ var tests = map[string]struct{
 	// Test FAIL cases
 	//
 
-	// Incorect option passed
+	// Incorrect option passed
 	`10[fail]incorrect-option`: {
 		args: []string{
 			`--bool-opt`,
