@@ -62,6 +62,7 @@ func (p *OptsParser) SetGeneralDescr(descr string) *OptsParser {
 func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue interface{}) {
 	// Split option name to long and short
 	long, short, shOk := strings.Cut(optName, "|")
+
 	switch {
 	case optType == typeSeparator:
 		// Skip separator
@@ -257,7 +258,6 @@ func (p *OptsParser) Parse() error {
 			// Save this option to map of set options
 			rqSet[p.shToLong[f.Name]] = true
 		}
-
 	})
 
 	// Check for all required options were set
@@ -404,6 +404,7 @@ func (p *OptsParser) Usage(errDescr ...error) {
 			nextSep = p.nextSep()
 			// Print separator, then continue to the next option
 			fmt.Fprintf(p.Output(), optIndent + "%s\n", f.Usage)
+
 			continue
 		}
 

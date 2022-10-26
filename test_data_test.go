@@ -363,6 +363,7 @@ func (ov *testOptVarYMD) String() string {
 }
 func (ov *testOptVarYMD) Set(val string) error {
 	ymd := make([]int, 0, 3)
+
 	for _, part := range strings.Split(val, ".") {
 		v, err := strconv.ParseInt(part, 10, 32)
 		if err != nil {
