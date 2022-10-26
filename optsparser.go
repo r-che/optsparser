@@ -308,7 +308,7 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 	descr := p.longOpts[f.Name]
 
 	// Value description function
-	valDescr := func(d *optDescr) string {
+	valDescr := func() string {
 		if descr.optType == typeBool {
 			// Boolean option
 			return "[=true|false]"
@@ -322,17 +322,17 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 		if p.shortFirst {
 			// Print short, join string, then long
 			fmt.Fprintf(out, optIndent + "-%s%s" + "%s" + "--%s%s\n",
-				short, valDescr(descr), p.lsJoinStr, f.Name, valDescr(descr))
+				short, valDescr(), p.lsJoinStr, f.Name, valDescr())
 		} else {
 			// Print long, join string, then short
 			fmt.Fprintf(out, optIndent + "--%s%s" + "%s" + "-%s%s\n",
-				f.Name, valDescr(descr), p.lsJoinStr, short, valDescr(descr))
+				f.Name, valDescr(), p.lsJoinStr, short, valDescr())
 		}
 	} else {
 		// Print only long option name, in fact - long options may be short if only short
 		// option was added by p.Add... function, for such case use dashes() function
 		// to print correct number of dashes before the option
-		fmt.Fprintf(out, optIndent + "%s%s%s\n", dashes(f.Name), f.Name, valDescr(descr))
+		fmt.Fprintf(out, optIndent + "%s%s%s\n", dashes(f.Name), f.Name, valDescr())
 	}
 
 	// Print usage information
