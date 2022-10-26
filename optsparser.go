@@ -236,62 +236,69 @@ func (p *OptsParser) Parse() error {
 	}
 
 	// Check for required options were set
-	if len(p.required) != 0 {
-		// List of required options that were set
-		rqSet := make(map[string]bool, len(p.required))
+	if len(p.required) == 0 {
+		// OK - required options were not set, nothing to check
+		return nil
+	}
 
-		p.Visit(func(f *flag.Flag) {
-			// Treat option name as long name
-			if _, ok := p.required[f.Name]; ok {
-				p.required[f.Name] = true
-				// Save this option to map of set options
-				rqSet[f.Name] = true
-			} else
-			// Threat option name as short name
-			if _, ok := p.required[p.shToLong[f.Name]]; ok {
-				p.required[p.shToLong[f.Name]] = true
-				// Save this option to map of set options
-				rqSet[p.shToLong[f.Name]] = true
-			}
+	// List of required options that were set
+	rqSet := make(map[string]bool, len(p.required))
 
-		})
+	p.Visit(func(f *flag.Flag) {
+		// Treat option name as long name
+		if _, ok := p.required[f.Name]; ok {
+			p.required[f.Name] = true
+			// Save this option to map of set options
+			rqSet[f.Name] = true
+		} else
+		// Threat option name as short name
+		if _, ok := p.required[p.shToLong[f.Name]]; ok {
+			p.required[p.shToLong[f.Name]] = true
+			// Save this option to map of set options
+			rqSet[p.shToLong[f.Name]] = true
+		}
 
-		// Check for some of required options were not set
-		if len(rqSet) != len(p.required) {
-			// Make sorted list of required options
-			opts := make([]string, 0, len(p.required))
-			for opt := range p.required {
-				opts = append(opts, opt)
-			}
-			// Sort it
-			sort.Strings(opts)
+	})
 
-			// List of required options that were not set
-			notSet := make([]string, 0, len(p.required))
-			for _, opt := range opts {
-				if !rqSet[opt] {
-					// Required option can be long or short, to print correct
-					// number of dashes before the option name use dashes() function
-					notSet = append(notSet, dashes(opt) + opt)
-				}
-			}
+	// Check for all required options were set
+	if len(rqSet) == len(p.required) {
+		// OK, return no errors
+		return nil
+	}
 
-			// Create an error
-			err := fmt.Errorf("required option(s) is missing: %s", strings.Join(notSet, `, `))
+	//
+	// Some of required options were not set
+	//
 
-			// Need to call Usage on fail?
-			if p.usageOnFail {
-				// Call Usage with error description
-				p.Usage(err)
-			}
+	// Make sorted list of required options
+	opts := make([]string, 0, len(p.required))
+	for opt := range p.required {
+		opts = append(opts, opt)
+	}
+	// Sort it
+	sort.Strings(opts)
 
-			// Just return error
-			return err
+	// List of required options that were not set
+	notSet := make([]string, 0, len(p.required))
+	for _, opt := range opts {
+		if !rqSet[opt] {
+			// Required option can be long or short, to print correct
+			// number of dashes before the option name use dashes() function
+			notSet = append(notSet, dashes(opt) + opt)
 		}
 	}
 
-	// OK
-	return nil
+	// Create an error
+	err = fmt.Errorf("required option(s) is missing: %s", strings.Join(notSet, `, `))
+
+	// Need to call Usage on fail?
+	if p.usageOnFail {
+		// Call Usage with error description
+		p.Usage(err)
+	}
+
+	// Otherwise - return error
+	return err
 }
 
 func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
