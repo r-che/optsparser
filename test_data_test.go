@@ -305,6 +305,7 @@ var tests = map[string]struct{
 }
 
 // Expected Usage outputs.
+//nolint:dupword
 const expUsageOutput = `
 Usage ERROR: test error for testing usage of ` +  stubApp + `
 
