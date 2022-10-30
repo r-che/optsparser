@@ -200,27 +200,6 @@ func TestAddIncorrect(t *testing.T) {
 	}
 }
 
-func TestAddUnsupported(t *testing.T) {
-	// Handle panic
-	defer func() {
-		switch p := recover(); p.(type) {
-		case nil:
-			// No panic, this should not be!
-			t.Errorf(`adding of unsupported option type did not cause a panic, but it must!`)
-		case OptsPanic:
-			// Ok, panic as expected
-		default:
-			t.Errorf("raised unexpected panic: %v", p)
-		}
-	}()
-
-	// Create new parser
-	p := NewParser(stubApp).SetOutput(&bytes.Buffer{})
-
-	// Add incorrect option type
-	p.addOpt(`TEST-UNSUPPORTED-TYPE`, `unsup-name`, `unsupported value usage`, nil, nil)
-}
-
 func TestRequiredNotAdded(t *testing.T) {
 	// Handle panic
 	defer func() {

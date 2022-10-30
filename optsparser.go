@@ -59,144 +59,87 @@ func (p *OptsParser) SetGeneralDescr(descr string) *OptsParser {
 	return p
 }
 
-func (p *OptsParser) addOpt(optType, optName, usage string, val, dfltValue interface{}) {
-	// Split option name to long and short
-	long, short, shOk := strings.Cut(optName, "|")
-
-	switch {
-	case optType == typeSeparator:
-		// Skip separator
-
-	// Short and long options should not be the same
-	case long == short:
-		doPanic("Option of type %q with the usage message %q has inappropriate option name", optType, usage)
-	// Check for long option
-	case long == "" && shOk:
-		// Strange situation, passed something like "|o" as optName
-		doPanic(`Invalid specification: %q - if you want to use a short option without long one (e.g. "-%s")` +
-			` just use %q as the option name parameter`, optName, short, short)
-	// Short should has only one character
-	case shOk && len(short) != 1:
-		doPanic("Invalid option description %q - length of short option must be == 1", optName)
-	}
-
-	// Option description
-	descr := optDescr{optType: optType}
-	p.longOpts[long] = &descr
-	p.orderedList = append(p.orderedList, long)
-
-	// If short option was provided
-	if shOk {
-		// Set match between short and long options
-		p.shToLong[short] = long
-		p.longOpts[long].short = short
-	}
-
-	// If this options is required - need to mark it as added to parser
-	if _, ok := p.required[long]; ok {
-		p.required[long] = false
-	}
-
-	// Stub for separators
-	var sepStub string
-
-	// Using standard flag functions
-	switch optType {
-	case typeBool:
-		p.BoolVar(val.(*bool), long, dfltValue.(bool), usage)
-		if shOk {
-			p.BoolVar(val.(*bool), short, dfltValue.(bool), usage)
-		}
-	case typeString:
-		p.StringVar(val.(*string), long, dfltValue.(string), usage)
-		if shOk {
-			p.StringVar(val.(*string), short, dfltValue.(string), usage)
-		}
-	case typeUint:
-		p.UintVar(val.(*uint), long, dfltValue.(uint), usage)
-		if shOk {
-			p.UintVar(val.(*uint), short, dfltValue.(uint), usage)
-		}
-	case typeUint64:
-		p.Uint64Var(val.(*uint64), long, dfltValue.(uint64), usage)
-		if shOk {
-			p.Uint64Var(val.(*uint64), short, dfltValue.(uint64), usage)
-		}
-	case typeInt:
-		p.IntVar(val.(*int), long, dfltValue.(int), usage)
-		if shOk {
-			p.IntVar(val.(*int), short, dfltValue.(int), usage)
-		}
-	case typeInt64:
-		p.Int64Var(val.(*int64), long, dfltValue.(int64), usage)
-		if shOk {
-			p.Int64Var(val.(*int64), short, dfltValue.(int64), usage)
-		}
-	case typeFloat64:
-		p.Float64Var(val.(*float64), long, dfltValue.(float64), usage)
-		if shOk {
-			p.Float64Var(val.(*float64), short, dfltValue.(float64), usage)
-		}
-	case typeDuration:
-		p.DurationVar(val.(*time.Duration), long, dfltValue.(time.Duration), usage)
-		if shOk {
-			p.DurationVar(val.(*time.Duration), short, dfltValue.(time.Duration), usage)
-		}
-	case typeVal:
-		p.Var(val.(flag.Value), long, usage)
-		if shOk {
-			p.Var(val.(flag.Value), short, usage)
-		}
-	case typeSeparator:
-		// Add new separator
-		sep := p.nextSep()
-		// Replace last item of ordered list by separator value
-		p.orderedList[len(p.orderedList)-1] = sep
-		p.StringVar(&sepStub, sep, "", usage)
-	default:
-		doPanic("Cannot add argument %q with unsupported type %q", long, optType)
-	}
-}
-
 func (p *OptsParser) AddBool(optName, usage string, val *bool, dfltVal bool) {
-	p.addOpt(typeBool, optName, usage, val, dfltVal)
+	long, short, shOk := p.parseOptName(typeBool, optName, usage)
+	p.BoolVar(val, long, dfltVal, usage)
+	if shOk {
+		p.BoolVar(val, short, dfltVal, usage)
+	}
 }
 
 func (p *OptsParser) AddString(optName, usage string, val *string, dfltVal string) {
-	p.addOpt(typeString, optName, usage, val, dfltVal)
+	long, short, shOk := p.parseOptName(typeString, optName, usage)
+	p.StringVar(val, long, dfltVal, usage)
+	if shOk {
+		p.StringVar(val, short, dfltVal, usage)
+	}
 }
 
 func (p *OptsParser) AddInt(optName, usage string, val *int, dfltVal int) {
-	p.addOpt(typeInt, optName, usage, val, dfltVal)
+	long, short, shOk := p.parseOptName(typeInt, optName, usage)
+	p.IntVar(val, long, dfltVal, usage)
+	if shOk {
+		p.IntVar(val, short, dfltVal, usage)
+	}
 }
 
 func (p *OptsParser) AddInt64(optName, usage string, val *int64, dfltVal int64) {
-	p.addOpt(typeInt64, optName, usage, val, dfltVal)
+	long, short, shOk := p.parseOptName(typeInt64, optName, usage)
+	p.Int64Var(val, long, dfltVal, usage)
+	if shOk {
+		p.Int64Var(val, short, dfltVal, usage)
+	}
 }
 
 func (p *OptsParser) AddFloat64(optName, usage string, val *float64, dfltVal float64) {
-	p.addOpt(typeFloat64, optName, usage, val, dfltVal)
+	long, short, shOk := p.parseOptName(typeFloat64, optName, usage)
+	p.Float64Var(val, long, dfltVal, usage)
+	if shOk {
+		p.Float64Var(val, short, dfltVal, usage)
+	}
 }
 
 func (p *OptsParser) AddDuration(optName, usage string, val *time.Duration, dfltVal time.Duration) {
-	p.addOpt(typeDuration, optName, usage, val, dfltVal)
+	long, short, shOk := p.parseOptName(typeDuration, optName, usage)
+	p.DurationVar(val, long, dfltVal, usage)
+	if shOk {
+		p.DurationVar(val, short, dfltVal, usage)
+	}
 }
 
 func (p *OptsParser) AddUint(optName, usage string, val *uint, dfltVal uint) {
-	p.addOpt(typeUint, optName, usage, val, dfltVal)
+	long, short, shOk := p.parseOptName(typeUint, optName, usage)
+	p.UintVar(val, long, dfltVal, usage)
+	if shOk {
+		p.UintVar(val, short, dfltVal, usage)
+	}
 }
 
 func (p *OptsParser) AddUint64(optName, usage string, val *uint64, dfltVal uint64) {
-	p.addOpt(typeUint64, optName, usage, val, dfltVal)
+	long, short, shOk := p.parseOptName(typeUint64, optName, usage)
+	p.Uint64Var(val, long, dfltVal, usage)
+	if shOk {
+		p.Uint64Var(val, short, dfltVal, usage)
+	}
 }
 
 func (p *OptsParser) AddVar(optName, usage string, val flag.Value) {
-	p.addOpt(typeVal, optName, usage, val, nil)
+	long, short, shOk := p.parseOptName(typeVal, optName, usage)
+	p.Var(val, long, usage)
+	if shOk {
+		p.Var(val, short, usage)
+	}
 }
 
 func (p *OptsParser) AddSeparator(separators ...string) {
 	for _, separator := range separators {
-		p.addOpt(typeSeparator, "", separator, nil, nil)
+		// Skip al returned values
+		_, _, _ = p.parseOptName(typeSeparator, "", separator)
+		// Add new separator
+		sep := p.nextSep()
+		// Replace last item of ordered list by separator value
+		p.orderedList[len(p.orderedList)-1] = sep
+		p.StringVar(new(string), sep, "", separator)
 	}
 }
 
@@ -276,6 +219,46 @@ func (p *OptsParser) Parse() error {
 
 	// Otherwise - return error
 	return err
+}
+
+func (p *OptsParser) parseOptName(optType, optName, usage string) (string, string, bool) {
+	// Split option name to long and short
+	long, short, shOk := strings.Cut(optName, "|")
+
+	switch {
+	case optType == typeSeparator:
+		// Skip separator
+
+	// Short and long options should not be the same
+	case long == short:
+		doPanic("Option of type %q with the usage message %q has inappropriate option name", optType, usage)
+	// Check for long option
+	case long == "" && shOk:
+		// Strange situation, passed something like "|o" as optName
+		doPanic(`Invalid specification: %q - if you want to use a short option without long one (e.g. "-%s")` +
+			` just use %q as the option name parameter`, optName, short, short)
+	// Short should has only one character
+	case shOk && len(short) != 1:
+		doPanic("Invalid option description %q - length of short option must be == 1", optName)
+	}
+
+	// Option description
+	p.longOpts[long] = &optDescr{optType: optType}
+	p.orderedList = append(p.orderedList, long)
+
+	// If short option was provided
+	if shOk {
+		// Set match between short and long options
+		p.shToLong[short] = long
+		p.longOpts[long].short = short
+	}
+
+	// If this options is required - need to mark it as added to parser
+	if _, ok := p.required[long]; ok {
+		p.required[long] = false
+	}
+
+	return long, short, shOk
 }
 
 func (p *OptsParser) requiredSet() (map[string]bool) {
