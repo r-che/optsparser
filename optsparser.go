@@ -236,31 +236,8 @@ func (p *OptsParser) Parse() error {
 		return err
 	}
 
-	// Check for required options were set
-	if len(p.required) == 0 {
-		// OK - required options were not set, nothing to check
-		return nil
-	}
-
-	// List of required options that were set
-	rqSet := make(map[string]bool, len(p.required))
-
-	p.Visit(func(f *flag.Flag) {
-		// Treat option name as long name
-		if _, ok := p.required[f.Name]; ok {
-			p.required[f.Name] = true
-			// Save this option to map of set options
-			rqSet[f.Name] = true
-		} else
-		// Threat option name as short name
-		if _, ok := p.required[p.shToLong[f.Name]]; ok {
-			p.required[p.shToLong[f.Name]] = true
-			// Save this option to map of set options
-			rqSet[p.shToLong[f.Name]] = true
-		}
-	})
-
 	// Check for all required options were set
+	rqSet := p.requiredSet()
 	if len(rqSet) == len(p.required) {
 		// OK, return no errors
 		return nil
@@ -299,6 +276,33 @@ func (p *OptsParser) Parse() error {
 
 	// Otherwise - return error
 	return err
+}
+
+func (p *OptsParser) requiredSet() (map[string]bool) {
+	// Check for required options were set
+	if len(p.required) == 0 {
+		// OK - required options were not set, nothing to check
+		return nil
+	}
+	// List of required options that were set
+	rqSet := make(map[string]bool, len(p.required))
+
+	p.Visit(func(f *flag.Flag) {
+		// Treat option name as long name
+		if _, ok := p.required[f.Name]; ok {
+			p.required[f.Name] = true
+			// Save this option to map of set options
+			rqSet[f.Name] = true
+		} else
+		// Threat option name as short name
+		if _, ok := p.required[p.shToLong[f.Name]]; ok {
+			p.required[p.shToLong[f.Name]] = true
+			// Save this option to map of set options
+			rqSet[p.shToLong[f.Name]] = true
+		}
+	})
+
+	return rqSet
 }
 
 func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
