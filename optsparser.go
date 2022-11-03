@@ -11,13 +11,6 @@ import (
 
 const lsJoinDefault = ", "
 
-var (
-	// Auxiliary variable to avoid tests termination on Usage() function.
-	usageDoExit		=	true	//nolint:gochecknoglobals // need for testing
-	// Auxiliary variable to show that Usage() was triggered.
-	usageTriggered	=	false	//nolint:gochecknoglobals // need for testing
-)
-
 type OptsParser struct {
 	flag.FlagSet
 	shToLong		map[string]string
@@ -29,6 +22,11 @@ type OptsParser struct {
 	lsJoinStr		string	// long + short join string
 	shortFirst		bool
 	usageOnFail		bool
+	//
+	// Variables required for testing
+	//
+	usageTriggered	bool	// show that Usage() was triggered
+	usageNotExits	bool	// if true - Usage does not call os.Exit()
 }
 
 func NewParser(name string, required ...string) *OptsParser {
@@ -400,11 +398,17 @@ func (p *OptsParser) Usage(errDescr ...error) {
 	}
 
 	// XXX This condition will not satisfied only in tests
-	if usageDoExit {
+	if !p.usageNotExits {
+		// Then - do exit
 		os.Exit(1)
 	}
-	// XXX For tests purposes - set flag that usage called
-	usageTriggered = true
+
+	//
+	// XXX This point should be reached only in tests
+	//
+
+	// Mark that Usage has been called
+	p.usageTriggered = true
 }
 
 func (p *OptsParser) nextSep() string {

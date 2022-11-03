@@ -14,9 +14,14 @@ const (
 	stubApp	=	"test-optsparser-app"
 )
 
-// Disallow Usage() do os.Exit.
-func init() {	//nolint:gochecknoinits
-	usageDoExit = false
+// newParser wraps creation of parser to prevent call of os.Exit() inside of Usage() function
+func newParser(name string, required ...string) *OptsParser {
+	p := NewParser(name, required...)
+
+	// Disallow Usage() do os.Exit()
+	p.usageNotExits = true
+
+	return p
 }
 
 func TestParser(t *testing.T) {
@@ -42,15 +47,12 @@ func TestParser(t *testing.T) {
 		// Get test
 		test := parserTests[testN]
 
-		// Reset usage triggered flag
-		usageTriggered = false
-
 		// Make a buffer to catch parser's output
 		tOut := &bytes.Buffer{}
 
 		//nolint:varnamelen	// Too obvious case in the test
 		// Create new parser
-		p := NewParser(stubApp,	// application name
+		p := newParser(stubApp,	// application name
 			test.required...,
 		).SetOutput(tOut)
 
@@ -106,7 +108,7 @@ func TestParser(t *testing.T) {
 		// Is test should be OK?
 		if test.needOK {
 			// Is it true?
-			if usageTriggered {
+			if p.usageTriggered {
 				// False, Usage called
 				t.Errorf("%q parse failed: args - %#v, test output:" +
 					"\n-------- Start output --------\n%s\n-------- End output --------",
@@ -125,7 +127,7 @@ func TestParser(t *testing.T) {
 		}
 
 		// Test should be failed
-		if !usageTriggered {
+		if !p.usageTriggered {
 			t.Errorf("%q incorrect Parse result - test should fail but it succeeds; got - %#v, args - %#v",
 				testN, to, test.args)
 		}
@@ -216,7 +218,7 @@ func TestRequiredNotAdded(t *testing.T) {
 	}()
 
 	// Create new parser
-	p := NewParser(stubApp,
+	p := newParser(stubApp,
 		`bool-option`,
 		`int-option`,
 	).SetOutput(&bytes.Buffer{})
@@ -234,7 +236,7 @@ func TestUsage(t *testing.T) {
 
 	//nolint:varnamelen	// Too obvious case in the test
 	// Create new parser
-	p := NewParser(stubApp,
+	p := newParser(stubApp,
 		"strval-required",
 		"duration-value",
 		"intval",
@@ -311,7 +313,7 @@ func TestUsageNoName(t *testing.T) {
 	// Buffer to save Usage output
 	tOut := &bytes.Buffer{}
 	// Create new parser
-	p := NewParser("",
+	p := newParser("",
 		"yesno",
 	).
 		SetGeneralDescr("\n$ " + stubApp + " --required-keys ... [--optional-keys ...]\n").
