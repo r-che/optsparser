@@ -176,7 +176,7 @@ func (p *OptsParser) Parse() error {
 		}
 
 		// Just return error
-		return err
+		return err	//nolint:wrapcheck // Obvious parse error - no need to additional error wrapping
 	}
 
 	// Check for all required options were set
