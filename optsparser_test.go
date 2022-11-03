@@ -352,7 +352,7 @@ func TestUsageNoName(t *testing.T) {
 }
 
 //
-// Functions required for testing.
+// Functions required for testing
 //
 func (p *OptsParser) SetOutput(output io.Writer) *OptsParser {
 	p.FlagSet.SetOutput(output)
