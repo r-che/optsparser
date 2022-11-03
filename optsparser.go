@@ -288,11 +288,11 @@ func (p *OptsParser) requiredSet() (map[string]bool) {
 	return rqSet
 }
 
-func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
+func (p *OptsParser) descrLongOpt(optFlag *flag.Flag) string {
 	// Output buffer
 	out := bytes.NewBuffer([]byte{})
 	// Get long option description
-	descr := p.longOpts[f.Name]
+	descr := p.longOpts[optFlag.Name]
 
 	// Value description function
 	valDescr := func() string {
@@ -309,27 +309,27 @@ func (p *OptsParser) descrLongOpt(f *flag.Flag) string {
 		if p.shortFirst {
 			// Print short, join string, then long
 			fmt.Fprintf(out, optIndent + "-%s%s" + "%s" + "--%s%s\n",
-				short, valDescr(), p.lsJoinStr, f.Name, valDescr())
+				short, valDescr(), p.lsJoinStr, optFlag.Name, valDescr())
 		} else {
 			// Print long, join string, then short
 			fmt.Fprintf(out, optIndent + "--%s%s" + "%s" + "-%s%s\n",
-				f.Name, valDescr(), p.lsJoinStr, short, valDescr())
+				optFlag.Name, valDescr(), p.lsJoinStr, short, valDescr())
 		}
 	} else {
 		// Print only long option name, in fact - long options may be short if only short
 		// option was added by p.Add... function, for such case use dashes() function
 		// to print correct number of dashes before the option
-		fmt.Fprintf(out, optIndent + "%s%s%s\n", dashes(f.Name), f.Name, valDescr())
+		fmt.Fprintf(out, optIndent + "%s%s%s\n", dashes(optFlag.Name), optFlag.Name, valDescr())
 	}
 
 	// Print usage information
-	out.WriteString(helpIndent + f.Usage)
+	out.WriteString(helpIndent + optFlag.Usage)
 
 	// Print default value if option is not required
-	if _, ok := p.required[f.Name]; ok {
+	if _, ok := p.required[optFlag.Name]; ok {
 		out.WriteString(" (required option)")
 	} else {
-		defVal := f.DefValue
+		defVal := optFlag.DefValue
 		if defVal == "" {
 			// Replace by quotes
 			defVal = `""`

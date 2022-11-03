@@ -48,6 +48,7 @@ func TestParser(t *testing.T) {
 		// Make a buffer to catch parser's output
 		tOut := &bytes.Buffer{}
 
+		//nolint:varnamelen	// Too obvious case in the test
 		// Create new parser
 		p := NewParser(stubApp,	// application name
 			test.required...,
@@ -61,7 +62,7 @@ func TestParser(t *testing.T) {
 			}
 			sepN++
 		}
-		to := testOpts{}
+		to := testOpts{} //nolint:varnamelen	// Too obvious case in the test
 
 		// Function to automate selection of option names
 		opt := func(ot, def string) string {
@@ -230,6 +231,8 @@ func TestRequiredNotAdded(t *testing.T) {
 func TestUsage(t *testing.T) {
 	// Buffer to save Usage output
 	tOut := &bytes.Buffer{}
+
+	//nolint:varnamelen	// Too obvious case in the test
 	// Create new parser
 	p := NewParser(stubApp,
 		"strval-required",
