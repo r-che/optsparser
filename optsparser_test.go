@@ -25,6 +25,8 @@ func newParser(name string, required ...string) *OptsParser {
 }
 
 func TestParser(t *testing.T) {
+	t.Parallel()
+
 	// Save current value of os.Args because it will be replaced by test values
 	origArgs := make([]string, 0, len(os.Args))
 	copy(origArgs, os.Args)
@@ -44,6 +46,9 @@ func TestParser(t *testing.T) {
 
 	// Run tests sorted by names
 	for _, testN := range names {
+		// XXX Do not run the tests in parallel inside the loop, because
+		// each test has to update the shared value of os.Args
+
 		// Get test
 		test := parserTests[testN]
 
@@ -137,6 +142,8 @@ func TestParser(t *testing.T) {
 }
 
 func TestAddIncorrect(t *testing.T) {
+	t.Parallel()
+
 	//
 	// Test cases
 	//
@@ -194,16 +201,23 @@ func TestAddIncorrect(t *testing.T) {
 
 	// Run tests from set
 	for i, test := range tests {
-		// Create new parser
-		p := NewParser(stubApp).SetOutput(&bytes.Buffer{})
+		// Capture variables to parallel usage
+		i, test := i, test
+		t.Run(fmt.Sprintf("panic-test#%d", i), func(t *testing.T) {
+			t.Parallel()
+			// Create new parser
+			p := newParser(stubApp).SetOutput(&bytes.Buffer{})
 
-		if err := testPanic(p, test); err != nil {
-			t.Errorf(`[%d] panic case return error: %v`, i, err)
-		}
+			if err := testPanic(p, test); err != nil {
+				t.Errorf(`[%d] panic case returns error: %v`, i, err)
+			}
+		})
 	}
 }
 
 func TestRequiredNotAdded(t *testing.T) {
+	t.Parallel()
+
 	// Handle panic
 	defer func() {
 		switch p := recover(); p.(type) {
@@ -231,6 +245,8 @@ func TestRequiredNotAdded(t *testing.T) {
 }
 
 func TestUsage(t *testing.T) {
+	t.Parallel()
+
 	// Buffer to save Usage output
 	tOut := &bytes.Buffer{}
 
@@ -310,6 +326,8 @@ func TestUsage(t *testing.T) {
 }
 
 func TestUsageNoName(t *testing.T) {
+	t.Parallel()
+
 	// Buffer to save Usage output
 	tOut := &bytes.Buffer{}
 	// Create new parser
