@@ -13,9 +13,9 @@ const lsJoinDefault = ", "
 
 var (
 	// Auxiliary variable to avoid tests termination on Usage() function.
-	usageDoExit		=	true
+	usageDoExit		=	true	//nolint:gochecknoglobals // need for testing
 	// Auxiliary variable to show that Usage() was triggered.
-	usageTriggered	=	false
+	usageTriggered	=	false	//nolint:gochecknoglobals // need for testing
 )
 
 type OptsParser struct {

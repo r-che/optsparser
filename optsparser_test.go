@@ -31,8 +31,8 @@ func TestParser(t *testing.T) {
 	}()
 
 	// Get tests names and sort them
-	names := make([]string, 0, len(tests))
-	for name := range tests {
+	names := make([]string, 0, len(parserTests))
+	for name := range parserTests {
 		names = append(names, name)
 	}
 	sort.Strings(names)
@@ -40,7 +40,7 @@ func TestParser(t *testing.T) {
 	// Run tests sorted by names
 	for _, testN := range names {
 		// Get test
-		test := tests[testN]
+		test := parserTests[testN]
 
 		// Reset usage triggered flag
 		usageTriggered = false
