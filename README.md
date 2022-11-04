@@ -90,7 +90,10 @@ An example where the required options are omitted:
 Usage Function:
 
   * Prints help by options in the order they were added - you can group options logically, by functional groups
+  * Prints general description and general form of the command to run an application if they were specified
   * Allows to add separators between groups of options - as empty lines or as text describing the group
+  * Has the ability to customize the option line output - which of the forms (short or long) is printed first,
+    the separator used between them
   * Indicates whether an option is required, otherwise the default value is shown
  
 ### Test coverage over 99% of the code
@@ -110,4 +113,4 @@ ok      github.com/r-che/optsparser     0.003s
 
 Feel free to open the [issue] if you have any suggestions, comments or bug reports.
 
-[issue]https://github.com/r-che/optsparser/issues
+[issue]: https://github.com/r-che/optsparser/issues

@@ -29,6 +29,9 @@ type OptsParser struct {
 	usageNotExits	bool	// if true - Usage does not call os.Exit()
 }
 
+// NewParser returns a new options parser with the specified name and set of required
+// flags. If the name is not empty, it will be printed int the usage message. Normally,
+// you need to use the name of the executable file of the application as the name parameter.
 func NewParser(name string, required ...string) *OptsParser {
 	parser := &OptsParser{
 		FlagSet:		*flag.NewFlagSet(name, flag.ContinueOnError),
@@ -51,12 +54,18 @@ func NewParser(name string, required ...string) *OptsParser {
 	return parser
 }
 
+// SetGeneralDescr sets general description and general form of the command to run an application
+// that uses optsparser. It will be printed by the Usage function after the error message (if any),
+// but before reference to supported options. For example:
+//  p.SetGeneralDescr("$ my-app-name --required-keys ... [--optional-keys ...]")
 func (p *OptsParser) SetGeneralDescr(descr string) *OptsParser {
 	p.generalDescr = descr
 
 	return p
 }
 
+// AddBool adds a bool option with specified option name, usage string and default value.
+// The argument val points to a bool variable in which to store the value of the option.
 func (p *OptsParser) AddBool(optName, usage string, val *bool, dfltVal bool) {
 	long, short, shOk := p.parseOptName(typeBool, optName, usage)
 	p.BoolVar(val, long, dfltVal, usage)
@@ -65,6 +74,8 @@ func (p *OptsParser) AddBool(optName, usage string, val *bool, dfltVal bool) {
 	}
 }
 
+// AddString adds a string option with specified option name, usage string and default value.
+// The argument val points to a string variable in which to store the value of the option.
 func (p *OptsParser) AddString(optName, usage string, val *string, dfltVal string) {
 	long, short, shOk := p.parseOptName(typeString, optName, usage)
 	p.StringVar(val, long, dfltVal, usage)
@@ -73,6 +84,8 @@ func (p *OptsParser) AddString(optName, usage string, val *string, dfltVal strin
 	}
 }
 
+// AddInt adds a int option with specified option name, usage string and default value.
+// The argument val points to a int variable in which to store the value of the option.
 func (p *OptsParser) AddInt(optName, usage string, val *int, dfltVal int) {
 	long, short, shOk := p.parseOptName(typeInt, optName, usage)
 	p.IntVar(val, long, dfltVal, usage)
@@ -81,6 +94,8 @@ func (p *OptsParser) AddInt(optName, usage string, val *int, dfltVal int) {
 	}
 }
 
+// AddInt64 adds a int64 option with specified option name, usage string and default value.
+// The argument val points to a int64 variable in which to store the value of the option.
 func (p *OptsParser) AddInt64(optName, usage string, val *int64, dfltVal int64) {
 	long, short, shOk := p.parseOptName(typeInt64, optName, usage)
 	p.Int64Var(val, long, dfltVal, usage)
@@ -89,6 +104,8 @@ func (p *OptsParser) AddInt64(optName, usage string, val *int64, dfltVal int64) 
 	}
 }
 
+// AddFloat64 adds a float64 option with specified option name, usage string and default value.
+// The argument val points to a float64 variable in which to store the value of the option.
 func (p *OptsParser) AddFloat64(optName, usage string, val *float64, dfltVal float64) {
 	long, short, shOk := p.parseOptName(typeFloat64, optName, usage)
 	p.Float64Var(val, long, dfltVal, usage)
@@ -97,6 +114,8 @@ func (p *OptsParser) AddFloat64(optName, usage string, val *float64, dfltVal flo
 	}
 }
 
+// AddDuration adds a [time.Duration] option with specified option name, usage string and default value.
+// The argument val points to a [time.Duration] variable in which to store the value of the option.
 func (p *OptsParser) AddDuration(optName, usage string, val *time.Duration, dfltVal time.Duration) {
 	long, short, shOk := p.parseOptName(typeDuration, optName, usage)
 	p.DurationVar(val, long, dfltVal, usage)
@@ -105,6 +124,8 @@ func (p *OptsParser) AddDuration(optName, usage string, val *time.Duration, dflt
 	}
 }
 
+// AddUint adds a uint option with specified option name, usage string and default value.
+// The argument val points to a uint variable in which to store the value of the option.
 func (p *OptsParser) AddUint(optName, usage string, val *uint, dfltVal uint) {
 	long, short, shOk := p.parseOptName(typeUint, optName, usage)
 	p.UintVar(val, long, dfltVal, usage)
@@ -113,6 +134,8 @@ func (p *OptsParser) AddUint(optName, usage string, val *uint, dfltVal uint) {
 	}
 }
 
+// AddUint64 adds a uint64 option with specified option name, usage string and default value.
+// The argument val points to a uint64 variable in which to store the value of the option.
 func (p *OptsParser) AddUint64(optName, usage string, val *uint64, dfltVal uint64) {
 	long, short, shOk := p.parseOptName(typeUint64, optName, usage)
 	p.Uint64Var(val, long, dfltVal, usage)
@@ -121,6 +144,8 @@ func (p *OptsParser) AddUint64(optName, usage string, val *uint64, dfltVal uint6
 	}
 }
 
+// AddVar adds a string option with specified option name, usage string and default value.
+// The argument val points to a string variable in which to store the value of the option.
 func (p *OptsParser) AddVar(optName, usage string, val flag.Value) {
 	long, short, shOk := p.parseOptName(typeVal, optName, usage)
 	p.Var(val, long, usage)
@@ -129,6 +154,8 @@ func (p *OptsParser) AddVar(optName, usage string, val flag.Value) {
 	}
 }
 
+// AddSeparator adds separation lines between the option references in the Usage function output.
+// Separation strings can be used to group options logically and create a description of a group.
 func (p *OptsParser) AddSeparator(separators ...string) {
 	for _, separator := range separators {
 		// Skip al returned values
@@ -141,6 +168,14 @@ func (p *OptsParser) AddSeparator(separators ...string) {
 	}
 }
 
+// Parse parses command-line options. If an error occurs during parsing-an unknown option,
+// an invalid value, or a required option is missing - [OptsParser.Usage] function is called
+// by default, to show the error message, provide help, and terminate the program. The Usage call
+// can be disabled by calling SetUsageOnFail before Parse with the value false. Then Parse will
+// return a parsing error to the caller.
+//
+// Parse panics if any of the required options specified in the [NewParser] call was not defined
+// using the Add* function, or if the format of the option name is incorrect.
 func (p *OptsParser) Parse() error {
 	// Check for all required options was set by Add...() functions
 	for opt, required := range p.required {
