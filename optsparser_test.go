@@ -28,7 +28,7 @@ func TestParser(t *testing.T) {
 	t.Parallel()
 
 	// Save current value of os.Args because it will be replaced by test values
-	origArgs := make([]string, 0, len(os.Args))
+	origArgs := make([]string, len(os.Args))
 	copy(origArgs, os.Args)
 	// Get the binary name
 	binName := os.Args[0]
