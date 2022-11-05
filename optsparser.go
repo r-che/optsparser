@@ -1,12 +1,13 @@
 package optsparser
 import (
-	"flag"
 	"bytes"
+	"errors"
+	"flag"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
-	"sort"
 )
 
 const lsJoinDefault = ", "
@@ -397,7 +398,7 @@ func (p *OptsParser) SetUsageOnFail(v bool) *OptsParser {
 
 func (p *OptsParser) Usage(errDescr ...error) {
 	// Check for custom error description
-	if len(errDescr) != 0 {
+	if len(errDescr) != 0 && !errors.Is(errDescr[0], flag.ErrHelp) {
 		fmt.Fprintf(p.Output(), "\nUsage ERROR: %v\n", errDescr[0])
 	}
 
