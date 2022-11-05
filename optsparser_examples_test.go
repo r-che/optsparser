@@ -62,13 +62,11 @@ func Example_parse() {
 	fmt.Printf("Arguments are: %#v\n", p.Args())
 }
 
-func Example_handleParseError() {
+func Example_parseErrorHandling() {
 	// Create new parser
 	p := NewParser("test parser",
 		"strval-required",
-	).
-		SetGeneralDescr("\n$ test-app --required-keys ... [--optional-keys ...]\n").
-		SetUsageOnFail(false)
+	).SetUsageOnFail(false)
 
 	var strVal string
 	p.AddString("strval-required|s", "", &strVal, "")

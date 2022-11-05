@@ -172,8 +172,8 @@ func (p *OptsParser) AddSeparator(separators ...string) {
 // Parse parses command-line options. If an error occurs during parsing-an unknown option,
 // an invalid value, or a required option is missing - [OptsParser.Usage] function is called
 // by default, to show the error message, provide help, and terminate the program. The Usage call
-// can be disabled by calling SetUsageOnFail before Parse with the value false. Then Parse will
-// return a parsing error to the caller.
+// can be disabled by calling [OptsParser.SetUsageOnFail] before Parse with the value false.
+// Then Parse will return a parsing error to the caller.
 //
 // Parse panics if any of the required options specified in the [NewParser] call was not defined
 // using the Add* function, or if the format of the option name is incorrect.
@@ -378,28 +378,51 @@ func (p *OptsParser) descrLongOpt(optFlag *flag.Flag) string {
 	return out.String()
 }
 
+// SetLongShortJoinStr sets the separator between the specifications of the short form and
+// the long form options in the Usage output, by default ", " is used. For example,
+// the following code:
+//  p := optsparser.NewParser("")
+//  p.AddBool("debug|d", "path to configuration", &dbgVal, false)
+//
+// causes Usage to produce the following specification for the the debug option:
+//  --debug[=true|false], -d[=true|false]
+//
+// Change the separator value to " | ":
+//  p := optsparser.NewParser("").SetLongShortJoinStr(" | ")
+//  p.AddBool("debug|d", "path to configuration", &debug, false)
+//
+// Now the debug option specification has been changed to:
+//  --debug[=true|false] | -d[=true|false]
 func (p *OptsParser) SetLongShortJoinStr(join string) *OptsParser {
 	p.lsJoinStr = join
 
 	return p
 }
 
+// SetShortFirst sets to show the short form of options first in the Usage output.
+// By default, the long form is printed first.
 func (p *OptsParser) SetShortFirst(v bool) *OptsParser {
 	p.shortFirst = v
 
 	return p
 }
 
+// SetUsageOnFail sets the behavior of the [OptsParser.Parse] function. By default, the Parse call
+// causes the program to exit using [OptsParser.Usage]. If you call SetUsageOnFail(false),
+// the Parse function will return a parsing error to the caller instead of calling Usage.
 func (p *OptsParser) SetUsageOnFail(v bool) *OptsParser {
 	p.usageOnFail = v
 
 	return p
 }
 
-func (p *OptsParser) Usage(errDescr ...error) {
+// Usage outputs error message err[0] (if passed), a general description of the program
+// (if specified via [OptsParser.SetGeneralDescr]) and reference for each option. Then,
+// it exits the program using os.Exit(1).
+func (p *OptsParser) Usage(err ...error) {
 	// Check for custom error description
-	if len(errDescr) != 0 && !errors.Is(errDescr[0], flag.ErrHelp) {
-		fmt.Fprintf(p.Output(), "\nUsage ERROR: %v\n", errDescr[0])
+	if len(err) != 0 && !errors.Is(err[0], flag.ErrHelp) {
+		fmt.Fprintf(p.Output(), "\nUsage ERROR: %v\n", err[0])
 	}
 
 	if name := p.FlagSet.Name(); name == "" {
