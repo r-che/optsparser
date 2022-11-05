@@ -382,14 +382,14 @@ func (p *OptsParser) descrLongOpt(optFlag *flag.Flag) string {
 // the long form options in the Usage output, by default ", " is used. For example,
 // the following code:
 //  p := optsparser.NewParser("")
-//  p.AddBool("debug|d", "path to configuration", &dbgVal, false)
+//  p.AddBool("debug|d", "enable debug", &dbgVal, false)
 //
 // causes Usage to produce the following specification for the the debug option:
 //  --debug[=true|false], -d[=true|false]
 //
 // Change the separator value to " | ":
 //  p := optsparser.NewParser("").SetLongShortJoinStr(" | ")
-//  p.AddBool("debug|d", "path to configuration", &debug, false)
+//  p.AddBool("debug|d", "enable debug", &debug, false)
 //
 // Now the debug option specification has been changed to:
 //  --debug[=true|false] | -d[=true|false]
