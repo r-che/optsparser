@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+//nolint:testableexamples
 func Example_parse() {
 	const exampleAppName = "test-app"
 
@@ -53,7 +54,7 @@ func Example_parse() {
 		">> Float64-based parameters")
 	p.AddFloat64("floatval", "some float value", &opts.vFloat, 0.0)
 
-	//nolint:errcheck // Perform options parsing, if something is wrong - Parse causes exit the program
+	// Perform options parsing, if something is wrong - Parse causes exit the program
 	p.Parse()
 
 	// By default this point is reached only if the parsing is successful - no additional checks are needed,
@@ -62,6 +63,7 @@ func Example_parse() {
 	fmt.Printf("Arguments are: %#v\n", p.Args())
 }
 
+//nolint:testableexamples
 func Example_parseErrorHandling() {
 	// Create new parser
 	p := NewParser("test parser",

@@ -395,7 +395,7 @@ func (p *OptsParser) descrLongOpt(optFlag *flag.Flag) string {
 //  p := optsparser.NewParser("")
 //  p.AddBool("debug|d", "enable debug", &dbgVal, false)
 //
-// causes Usage to produce the following specification for the the debug option:
+// causes Usage to produce the following specification for the debug option:
 //  --debug[=true|false], -d[=true|false]
 //
 // Change the separator value to " | ":

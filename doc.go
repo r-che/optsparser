@@ -41,7 +41,8 @@ In case the format of optName passed to Add* function is wrong, the [OptsParser.
 Because OptsParser embeds the standard [flag] package, you can use any methods from this package.
 
 However, you MUST NOT use the methods of the standard package that add options for parsing,
-like: [flag.FlagSet.Bool], [flag.FlagSet.Float64Var], [flag.FlagSet.Var] and so on. Options added using standard package methods:
+like: [flag.FlagSet.Bool], [flag.FlagSet.Float64Var], [flag.FlagSet.Var] and so on.
+Options added using standard package methods:
 
   * Do not support long/short form
   * Not printed in Usage output
