@@ -1,12 +1,14 @@
 package optsparser
 
 import (
-	"fmt"
 	"bytes"
-	"testing"
-	"os"
+	"errors"
+	"flag"
+	"fmt"
 	"io"
+	"os"
 	"sort"
+	"testing"
 	"time"
 )
 
@@ -247,6 +249,69 @@ func TestRequiredNotAdded(t *testing.T) {
 func TestUsage(t *testing.T) {
 	t.Parallel()
 
+	// Get new parser
+	p, tOut := parserWithPredefinedUsage()
+
+	// Call Usage to get output
+	p.Usage(fmt.Errorf("test error for testing usage of %s", stubApp))
+
+	// Compare produced output with expected
+	if tOut.String() != expUsageOutputWithErr {
+		t.Errorf("output produced by Usage is different from expexted, see below:\n" +
+			"\n-------- Want --------\n%s\n" +
+			"-------- Got --------\n%s\n",
+			expUsageOutputWithErr, tOut.String(),
+		)
+	}
+}
+
+func TestHelpOption(t *testing.T) {
+	t.Parallel()
+
+	// Save current value of os.Args because it will be replaced by test values
+	origArgs := make([]string, len(os.Args))
+	copy(origArgs, os.Args)
+	// Recover on exiting from function
+	defer func() {
+		os.Args = origArgs
+	}()
+
+	// Run tests
+	for _, args := range [][]string {
+		[]string{os.Args[0], "--help"},
+		[]string{os.Args[0], "--h"},
+	} {
+		// Get new parser
+		p, tOut := parserWithPredefinedUsage()
+
+		// Replace command line arguments
+		os.Args = args
+
+		// Parse options
+		if err := p.Parse(); !errors.Is(err, flag.ErrHelp) {
+			t.Errorf("Parse returned unexpected error value - %v, want - %v", err, flag.ErrHelp)
+			t.FailNow()
+		}
+
+		// Check that Usage was not triggered
+		if !p.usageTriggered {
+			t.Errorf("Usage function was not called by arguments: %v", os.Args)
+			t.FailNow()
+		}
+
+		// Compare produced output with expected
+		if tOut.String() != expUsageOutput {
+			t.Errorf("output produced by Usage is different from expexted, see below:\n" +
+				"\n-------- Want --------\n%s\n" +
+				"-------- Got --------\n%s\n",
+				expUsageOutput, tOut.String(),
+			)
+			t.FailNow()
+		}
+	}
+}
+
+func parserWithPredefinedUsage() (*OptsParser, *bytes.Buffer) {
 	// Buffer to save Usage output
 	tOut := &bytes.Buffer{}
 
@@ -312,17 +377,7 @@ func TestUsage(t *testing.T) {
 	var floatVal float64
 	p.AddFloat64("floatval", "some float value", &floatVal, 0.0)
 
-	// Call Usage to get output
-	p.Usage(fmt.Errorf("test error for testing usage of %s", stubApp))
-
-	// Compare produced output with expected
-	if tOut.String() != expUsageOutput {
-		t.Errorf("output produced by Usage is different from expexted, see below:\n" +
-			"\n-------- Want --------\n%s\n" +
-			"-------- Got --------\n%s\n",
-			expUsageOutput, tOut.String(),
-		)
-	}
+	return p, tOut
 }
 
 func TestUsageNoName(t *testing.T) {

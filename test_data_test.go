@@ -311,8 +311,6 @@ var (
 // Expected Usage outputs
 //nolint:dupword
 const expUsageOutput = `
-Usage ERROR: test error for testing usage of ` +  stubApp + `
-
 Usage of ` + stubApp + `:
 
 $ ` + stubApp + ` --required-keys ... [--optional-keys ...]
@@ -346,6 +344,10 @@ $ ` + stubApp + ` --required-keys ... [--optional-keys ...]
     --floatval float64
       some float value (default: 0)
 `
+const expUsageOutputWithErr = `
+Usage ERROR: test error for testing usage of ` +  stubApp + `
+` + expUsageOutput
+
 // Usage without application name
 const expUsageNoNameOutput = `
 Usage ERROR: test error for testing usage of ` + stubApp + `

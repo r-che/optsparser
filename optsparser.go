@@ -203,9 +203,15 @@ func (p *OptsParser) Parse() error {
 	p.FlagSet.SetOutput(out)
 
 	if err != nil {
-		// Need to call Usage on fail?
+		// Need to show help?
+		if errors.Is(err, flag.ErrHelp) {
+			// Show usage and exit
+			p.Usage()
+		}
+
+		// Some parsing error, check for need to call Usage on fail
 		if p.usageOnFail {
-			// Call Usage with error description
+			// Call Usage with the error description
 			p.Usage(err)
 		}
 
@@ -213,6 +219,11 @@ func (p *OptsParser) Parse() error {
 		return err	//nolint:wrapcheck // Obvious parse error - no need to additional error wrapping
 	}
 
+	// Check required options
+	return p.checkRequired()
+}
+
+func (p *OptsParser) checkRequired() error {
 	// Check for all required options were set
 	rqSet := p.requiredSet()
 	if len(rqSet) == len(p.required) {
@@ -243,7 +254,7 @@ func (p *OptsParser) Parse() error {
 	}
 
 	// Create an error
-	err = fmt.Errorf("required option(s) is missing: %s", strings.Join(notSet, `, `))
+	err := fmt.Errorf("required option(s) is missing: %s", strings.Join(notSet, `, `))
 
 	// Need to call Usage on fail?
 	if p.usageOnFail {
@@ -421,7 +432,7 @@ func (p *OptsParser) SetUsageOnFail(v bool) *OptsParser {
 // it exits the program using os.Exit(1).
 func (p *OptsParser) Usage(err ...error) {
 	// Check for custom error description
-	if len(err) != 0 && !errors.Is(err[0], flag.ErrHelp) {
+	if len(err) != 0 {
 		fmt.Fprintf(p.Output(), "\nUsage ERROR: %v\n", err[0])
 	}
 
